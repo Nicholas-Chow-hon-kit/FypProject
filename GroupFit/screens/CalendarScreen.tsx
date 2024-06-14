@@ -16,7 +16,6 @@ const CalendarScreen = () => {
     textDayHeaderFontSize: 16,
     textMonthFontSize: 16,
     textDayFontSize: 16,
-    
   };
 
   useEffect(() => {
@@ -38,8 +37,10 @@ const CalendarScreen = () => {
   }, []);
 
   const handleAddEvent = () => {
-    const date = newEvent.date;
+    const date = newEvent.date || selectedDate;
     const title = newEvent.title;
+
+    if (!date) return;
 
     setEvents((prevEvents) => {
       const updatedEvents = { ...prevEvents };
@@ -59,16 +60,19 @@ const CalendarScreen = () => {
 
     setModalVisible(false);
     setNewEvent({ title: '', date: '' });
-    setSelectedDate(date); // Set the selected date to the newly added event date
   };
 
   const handleDayPress = (dateString: string) => {
-    setSelectedDate(dateString);
-    setModalVisible(true);
+    if (selectedDate === dateString) {
+      setModalVisible(true);
+    } else {
+      setSelectedDate(dateString);
+    }
   };
 
   return (
     <View style={styles.container}>
+      <View style={styles.calendarContainer}>
       <View style={styles.addButtonContainer}>
         <Pressable onPress={() => setModalVisible(true)}>
           <Text style={styles.addButton}>+</Text>
@@ -114,6 +118,7 @@ const CalendarScreen = () => {
         }}
         firstDay={1} // Set Monday as the first day of the week
       />
+      </View>
       <Modal
         visible={modalVisible}
         animationType="slide"
@@ -139,6 +144,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF', // Set background color for the calendar screen
+    width: '100%',
+  },
+  calendarContainer: {
+    flex: 1,
+    transform: [{ scale: 0.95 }], // Scale the calendar 
   },
   dayContainer: {
     width: '100%',
