@@ -34,7 +34,18 @@ const TaskItem: React.FC<TaskItemProps> = ({
       </TouchableOpacity>
       {expanded && (
         <View style={[styles.details, expanded && styles.detailsExpanded]}>
-          <Text>{task.details}</Text>
+          <Text>Start Date: {task.startDate}</Text>
+          <Text>Start Time: {task.startTime}</Text>
+          <Text>End Date: {task.endDate}</Text>
+          <Text>End Time: {task.endTime}</Text>
+          <Text>Location: {task.location}</Text>
+          <Text>Grouping: {task.grouping}</Text>
+          <Text>Notes: {task.notes}</Text>
+          <Text>Priority: {task.priority}</Text>
+          <Text>Notification: {task.notification}</Text>
+          <Text>Personal ID: {task.personalId}</Text>
+          <Text>Completed By ID: {task.completedById}</Text>
+          <Text>Assigned To ID: {task.assignedToId}</Text>
         </View>
       )}
       <Modal
@@ -94,9 +105,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#f0f0f0", // Added this line to make the background color #f0f0f0
-    padding: 10, // Added this line for padding
-    borderRadius: 5, // Added this line for rounded corners
+    backgroundColor: "#f0f0f0",
+    padding: 10,
+    borderRadius: 5,
   },
   headerExpanded: {
     borderBottomLeftRadius: 0,

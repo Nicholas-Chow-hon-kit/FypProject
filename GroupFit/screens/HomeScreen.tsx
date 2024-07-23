@@ -1,74 +1,71 @@
 import React from "react";
-import { View, ScrollView, StyleSheet, Text } from "react-native";
+import {
+  View,
+  FlatList,
+  StyleSheet,
+  Text,
+  SafeAreaView,
+  StatusBar,
+} from "react-native";
 import Header from "../components/Header";
 import TaskGroup from "../components/TaskGroup";
 import { MaterialIcons } from "@expo/vector-icons";
-import { Task } from "../types";
-
-const taskGroups = [
-  {
-    title: "Gym Class",
-    color: "#dec4ff",
-    tasks: [
-      { id: 1, title: "Warm-up", details: "10 minutes of stretching" },
-      { id: 2, title: "Cardio", details: "30 minutes on treadmill" },
-    ],
-  },
-  {
-    title: "Agile Group Project",
-    color: "#c4dfff",
-    tasks: [
-      {
-        id: 1,
-        title: "Sprint Planning",
-        details: "Plan tasks for the next sprint",
-      },
-      { id: 2, title: "Code Review", details: "Review code with team" },
-    ],
-  },
-];
+import { Task, TaskGroupData } from "../types";
+import { data } from "../store/dummyData";
 
 const onDelete = (id: number) => {
   // Implement your delete logic here
 };
 
 const onEdit = (task: Task) => {
-  // Implement your delete logic here
+  // Implement your edit logic here
 };
 
 const onShare = (task: Task) => {
-  // Implement your delete logic here
+  // Implement your share logic here
 };
 
 const HomeScreen = () => {
+  const renderItem = ({ item }: { item: TaskGroupData }) => (
+    <TaskGroup
+      groupTitle={item.groupTitle}
+      tasks={item.tasks}
+      color={item.color}
+      onDelete={onDelete}
+      onEdit={onEdit}
+      onShare={onShare}
+    />
+  );
+
   return (
-    <View style={styles.container}>
-      <Header />
-      <View style={styles.periodSelector}>
-        <Text style={styles.periodText}>Task for the week</Text>
-        <MaterialIcons name="arrow-drop-down" size={24} />
-      </View>
-      {taskGroups.map((group, index) => (
-        <TaskGroup
-          key={index}
-          title={group.title}
-          tasks={group.tasks}
-          color={group.color}
-          onDelete={onDelete}
-          onEdit={onEdit}
-          onShare={onShare}
-        />
-      ))}
-    </View>
+    <SafeAreaView style={styles.safeAreaContainer}>
+      <StatusBar barStyle="default" />
+      <FlatList
+        ListHeaderComponent={
+          <View style={styles.headerContainer}>
+            <Header />
+            <View style={styles.periodSelector}>
+              <Text style={styles.periodText}>Tasks for the week</Text>
+              <MaterialIcons name="arrow-drop-down" size={24} />
+            </View>
+          </View>
+        }
+        data={data}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.groupTitle} // Adjust keyExtractor as needed
+      />
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeAreaContainer: {
     flex: 1,
-    padding: 10,
-    marginTop: 25,
     backgroundColor: "#fff",
+  },
+  headerContainer: {
+    marginTop: 5,
+    marginBottom: 10,
   },
   periodSelector: {
     flexDirection: "row",

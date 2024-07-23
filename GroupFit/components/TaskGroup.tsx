@@ -5,7 +5,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { TaskGroupProps } from "../types";
 
 const TaskGroup: React.FC<TaskGroupProps> = ({
-  title,
+  groupTitle,
   tasks,
   color,
   onDelete,
@@ -16,7 +16,7 @@ const TaskGroup: React.FC<TaskGroupProps> = ({
     <View style={[styles.container, { backgroundColor: color }]}>
       <View style={styles.header}>
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.title}>{groupTitle}</Text>
           <Text style={styles.taskCount}>{tasks.length}</Text>
         </View>
         <MaterialIcons name="add" size={24} style={styles.addIcon} />
