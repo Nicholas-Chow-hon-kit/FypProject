@@ -1,3 +1,4 @@
+//Task Detail interface
 export interface Task {
   id: number;
   title: string;
@@ -15,6 +16,7 @@ export interface Task {
   assignedToId: number;   // personal identifier for the person who is assigned the task
 }
 
+//Task Item component props
 export interface TaskItemProps {
   task: Task;
   onDelete: (id: number) => void;
@@ -22,6 +24,7 @@ export interface TaskItemProps {
   onShare: (task: Task) => void;
 }
 
+//Task Group component props
 export interface TaskGroupProps {
   groupTitle: string;
   tasks: Task[];
@@ -31,8 +34,24 @@ export interface TaskGroupProps {
   onShare: (task: Task) => void;
 }
 
+//Task group data types
 export type TaskGroupData = {
   groupTitle: string;
   tasks: Task[];
   color: string;
 };
+
+//Grid calendar day component status interface
+export interface Events {
+  [date: string]: {
+    marked?: boolean;
+    dotColor?: string;
+    events: Event[];
+    isToday?: boolean;
+  };
+}
+
+//Grid calendar day component task detail interface
+export interface Event {
+  title: string;
+}

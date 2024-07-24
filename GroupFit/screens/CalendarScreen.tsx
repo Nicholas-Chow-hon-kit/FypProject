@@ -9,18 +9,10 @@ import {
 } from "react-native";
 import GridCalendar from "../components/GridCalendar";
 import EventModal from "../components/EventModal";
+import { Events } from "../types";
 
 interface Event {
   title: string;
-}
-
-interface Events {
-  [date: string]: {
-    marked?: boolean;
-    dotColor?: string;
-    events: Event[];
-    isToday?: boolean;
-  };
 }
 
 const CalendarScreen = () => {
