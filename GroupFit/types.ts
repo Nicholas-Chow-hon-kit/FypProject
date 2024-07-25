@@ -1,3 +1,15 @@
+//Navigation stack param list
+export type RootStackParamList = {
+  HomeTabs: undefined;
+  TaskForm: { date: string | null };
+};
+
+// CalendarStackParamList 
+export type CalendarStackParamList = {
+  CalendarScreen: undefined;
+};
+
+
 //Task Detail interface
 export interface Task {
   id: number;
@@ -55,3 +67,4 @@ export interface Events {
 export interface Event {
   title: string;
 }
+

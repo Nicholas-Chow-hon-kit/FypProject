@@ -8,18 +8,17 @@ import {
   StatusBar,
 } from "react-native";
 import GridCalendar from "../components/GridCalendar";
-import EventModal from "../components/EventModal";
-import { Events } from "../types";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList, Events } from "../types";
 
-interface Event {
-  title: string;
-}
-
-const CalendarScreen = () => {
+const CalendarScreen: React.FC = () => {
   const [events, setEvents] = useState<Events>({});
-  const [modalVisible, setModalVisible] = useState(false);
-  const [newEvent, setNewEvent] = useState({ title: "", date: "" });
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [lastPressedDate, setLastPressedDate] = useState<string | null>(null);
+
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   useEffect(() => {
     const today = new Date();
@@ -36,39 +35,15 @@ const CalendarScreen = () => {
 
     setEvents(initialEvents);
     setSelectedDate(todayString);
+    setLastPressedDate(todayString);
   }, []);
 
-  const handleAddEvent = () => {
-    const date = newEvent.date || selectedDate;
-    const title = newEvent.title;
-
-    if (!date) return;
-
-    setEvents((prevEvents) => {
-      const updatedEvents = { ...prevEvents };
-
-      if (!updatedEvents[date]) {
-        updatedEvents[date] = {
-          marked: true,
-          dotColor: "blue",
-          events: [],
-        };
-      }
-
-      updatedEvents[date].events.push({ title });
-
-      return updatedEvents;
-    });
-
-    setModalVisible(false);
-    setNewEvent({ title: "", date: "" });
-  };
-
   const handleDayPress = (dateString: string) => {
-    if (selectedDate === dateString) {
-      setModalVisible(true);
+    if (selectedDate === dateString && lastPressedDate === dateString) {
+      navigation.navigate("TaskForm", { date: dateString });
     } else {
       setSelectedDate(dateString);
+      setLastPressedDate(dateString);
     }
   };
 
@@ -78,7 +53,10 @@ const CalendarScreen = () => {
       <View style={styles.container}>
         <View style={styles.calendarWrapper}>
           <View style={styles.addButtonContainer}>
-            <Pressable onPress={() => setModalVisible(true)}>
+            <Pressable
+              onPress={() =>
+                navigation.navigate("TaskForm", { date: selectedDate })
+              }>
               <Text style={styles.addButton}>+</Text>
             </Pressable>
           </View>
@@ -86,13 +64,6 @@ const CalendarScreen = () => {
             events={events}
             selectedDate={selectedDate}
             onDayPress={handleDayPress}
-          />
-          <EventModal
-            visible={modalVisible}
-            onClose={() => setModalVisible(false)}
-            newEvent={newEvent}
-            setNewEvent={setNewEvent}
-            onAddEvent={handleAddEvent}
           />
         </View>
       </View>
@@ -112,8 +83,8 @@ const styles = StyleSheet.create({
   },
   calendarWrapper: {
     flex: 1,
-    transform: [{ scale: 0.9 }], // Scale the calendar (adjust as needed)
-    marginTop: 10, // Adjust top margin as needed
+    transform: [{ scale: 0.9 }],
+    marginTop: 10,
   },
   addButtonContainer: {
     position: "absolute",
