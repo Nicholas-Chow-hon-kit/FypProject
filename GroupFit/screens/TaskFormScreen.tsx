@@ -8,13 +8,27 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
+  Modal,
+  Button,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../types";
 import { Ionicons } from "@expo/vector-icons";
+import ColorPicker, {
+  Panel1,
+  Swatches,
+  Preview,
+  OpacitySlider,
+  HueSlider,
+} from "reanimated-color-picker";
+import ColorPickerModal from "../components/ColorPickerModal";
 
 type TaskFormProps = NativeStackScreenProps<RootStackParamList, "TaskForm">;
+
+type ColorObject = {
+  hex: string;
+};
 
 const TaskForm: React.FC<TaskFormProps> = ({ route, navigation }) => {
   const { date } = route.params;
@@ -37,10 +51,15 @@ const TaskForm: React.FC<TaskFormProps> = ({ route, navigation }) => {
     assignedToId: 1,
   });
 
+  const [groupTitle, setGroupTitle] = useState("Personal");
+  const [groupColor, setGroupColor] = useState("#54c5c9");
+
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
+
+  const [showColorModal, setShowColorModal] = useState(false);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -65,13 +84,40 @@ const TaskForm: React.FC<TaskFormProps> = ({ route, navigation }) => {
   };
 
   const handleSubmit = () => {
-    console.log(task);
+    const formattedTask = {
+      groupTitle,
+      color: groupColor,
+      tasks: [
+        {
+          id: 1, // You may want to generate a unique ID or manage IDs differently
+          title: task.title,
+          startDate: task.startDate,
+          startTime: task.startTime,
+          endDate: task.endDate,
+          endTime: task.endTime,
+          location: task.location,
+          grouping: task.grouping,
+          notes: task.notes,
+          priority: task.priority,
+          notification: task.notification,
+          personalId: task.personalId,
+          completedById: task.completedById,
+          assignedToId: task.assignedToId,
+        },
+      ],
+    };
+    console.log(formattedTask);
     // Handle form submission, such as saving to a database
     navigation.goBack();
   };
 
   const handleCancel = () => {
     navigation.goBack();
+  };
+
+  const onSelectColor = ({ hex }: ColorObject) => {
+    setGroupColor(hex);
+    console.log(hex);
   };
 
   return (
@@ -196,6 +242,19 @@ const TaskForm: React.FC<TaskFormProps> = ({ route, navigation }) => {
             value={task.grouping}
             onChangeText={(text) => handleChange("grouping", text)}
           />
+          <View style={styles.colorContainer}>
+            <TouchableOpacity
+              style={[styles.colorCircle, { backgroundColor: groupColor }]}
+              onPress={() => setShowColorModal(true)}>
+              {/* Circle is filled with the selected color */}
+            </TouchableOpacity>
+            <ColorPickerModal
+              visible={showColorModal}
+              onClose={() => setShowColorModal(false)}
+              onSelectColor={onSelectColor}
+              currentColor={groupColor}
+            />
+          </View>
         </View>
 
         <View style={styles.inputContainer}>
@@ -284,6 +343,17 @@ const styles = StyleSheet.create({
     padding: 8,
     textAlign: "center",
   },
+  colorContainer: {},
+  colorCircle: {
+    width: 35,
+    height: 35,
+    borderRadius: 25,
+    backgroundColor: "#54c5c9", // Default color
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#DCDCDC",
+  },
   input: {
     flex: 1,
     padding: 8,
@@ -312,7 +382,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   buttonText: {
-    fontSize: 24,
+    fontSize: 20,
     textAlign: "center",
   },
 });
