@@ -132,6 +132,11 @@ const TaskForm: React.FC<TaskFormProps> = ({ route, navigation }) => {
           />
         </View>
 
+        <View style={styles.labelContainer}>
+          <Ionicons name="time-outline" size={28} color="black" />
+          <Text style={styles.labelText}>Task date & time:</Text>
+        </View>
+
         <View style={styles.dateSelectionContainer}>
           <View style={styles.dateTimeContainer}>
             <View style={styles.dateContainer}>
@@ -309,6 +314,15 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     padding: 16,
   },
+  labelContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 18,
+  },
+  labelText: {
+    fontSize: 20,
+    marginLeft: 8,
+  },
   dateSelectionContainer: {
     marginTop: 16,
     borderBottomWidth: 1,
@@ -358,6 +372,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 8,
     marginLeft: 8,
+    fontSize: 20,
   },
   inputContainer: {
     flexDirection: "row",
