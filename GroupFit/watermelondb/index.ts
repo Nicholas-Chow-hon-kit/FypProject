@@ -6,10 +6,9 @@ import schema from './schema'
 import migrations from './migrations'
 // import Post from './model/Post' // ⬅️ You'll import your Models here
 
-// First, create the adapter to the underlying database:
+
 const adapter = new SQLiteAdapter({
   schema,
-  // (You might want to comment it out for development purposes -- see Migrations documentation)
   migrations,
   // (optional database name or file system path)
   // dbName: 'myapp',

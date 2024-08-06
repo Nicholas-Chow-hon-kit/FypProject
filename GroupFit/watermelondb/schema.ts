@@ -1,7 +1,8 @@
 import { appSchema, tableSchema } from '@nozbe/watermelondb';
 
+
 export default appSchema({
-  version: 1,
+  version: 1,// Every time you change the schema you need to increment this!
   tables: [
     tableSchema({
       name: 'groups',
@@ -18,7 +19,6 @@ export default appSchema({
       columns: [
         { name: 'name', type: 'string' },
         { name: 'email', type: 'string' },
-        { name: 'password', type: 'string' }, // Hashed password
       ],
     }),
     tableSchema({
