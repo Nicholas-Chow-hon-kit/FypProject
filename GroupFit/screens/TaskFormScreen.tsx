@@ -46,7 +46,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ route, navigation }) => {
     notes: "",
     priority: "",
     notification: "",
-    personalId: 1,
+    createdById: 1,
     completedById: undefined,
     assignedToId: 1,
   });
@@ -84,6 +84,14 @@ const TaskForm: React.FC<TaskFormProps> = ({ route, navigation }) => {
   };
 
   const handleSubmit = () => {
+    // Convert start and end date/time into JSON date format
+    const startDateTimeJSON = new Date(
+      `${task.startDate}T${task.startTime}`
+    ).toISOString();
+    const endDateTimeJSON = new Date(
+      `${task.endDate}T${task.endTime}`
+    ).toISOString();
+
     const formattedTask = {
       groupTitle,
       color: groupColor,
@@ -91,21 +99,21 @@ const TaskForm: React.FC<TaskFormProps> = ({ route, navigation }) => {
         {
           id: 1, // You may want to generate a unique ID or manage IDs differently
           title: task.title,
-          startDate: task.startDate,
-          startTime: task.startTime,
-          endDate: task.endDate,
-          endTime: task.endTime,
+          // JSON date format
+          startDateTime: startDateTimeJSON,
+          endDateTime: endDateTimeJSON,
           location: task.location,
           grouping: task.grouping,
           notes: task.notes,
           priority: task.priority,
           notification: task.notification,
-          personalId: task.personalId,
+          createdById: task.createdById,
           completedById: task.completedById,
           assignedToId: task.assignedToId,
         },
       ],
     };
+
     console.log(formattedTask);
     // Handle form submission, such as saving to a database
     navigation.goBack();

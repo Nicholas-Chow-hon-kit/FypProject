@@ -15,9 +15,9 @@ const data = [
           notes: "Stretch all major muscle groups",
           priority: "important",
           notification: "Tue, 18 Jun 07:50",
-          personalId: 101,
+          createdById: 101,
           completedById: 201, // ID of the person who completed the task
-          assignedToId: 101, // ID of the person assigned the task (same as personalId if personal task)
+          assignedToId: 101, // ID of the person assigned the task (same as createdById if personal task)
         },
         {
           id: 2,
@@ -31,8 +31,8 @@ const data = [
           notes: "30 minutes on treadmill",
           priority: "very important",
           notification: "Tue, 18 Jun 08:20",
-          personalId: 101,
-          assignedToId: 101, // ID of the person assigned the task (same as personalId if personal task)
+          createdById: 101,
+          assignedToId: 101, // ID of the person assigned the task (same as createdById if personal task)
         },
       ],
     },
@@ -52,7 +52,7 @@ const data = [
           notes: "Plan tasks for the next sprint",
           priority: "important",
           notification: "Wed, 19 Jun 09:50",
-          personalId: 102,
+          createdById: 102,
           assignedToId: 103, // ID of the person assigned the task
         },
         {
@@ -67,7 +67,7 @@ const data = [
           notes: "Review code with team",
           priority: "very important",
           notification: "Thu, 20 Jun 13:50",
-          personalId: 102,
+          createdById: 102,
           assignedToId: 103, // ID of the person assigned the task
         },
       ],

@@ -5,12 +5,13 @@ import CalendarStack from "./CalendarStack";
 import CommunitiesStack from "./CommunitiesStack";
 import SettingsStack from "./SettingsStack";
 import { Ionicons } from "@expo/vector-icons";
+import { Session } from "@supabase/supabase-js";
 
 const Tab = createBottomTabNavigator();
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
-const TabNavigator = () => {
+const TabNavigator = ({ session }: { session: Session }) => {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -51,11 +52,9 @@ const TabNavigator = () => {
         component={CommunitiesStack}
         options={{ tabBarLabel: "Communities" }}
       />
-      <Tab.Screen
-        name="Settings"
-        component={SettingsStack}
-        options={{ tabBarLabel: "Settings" }}
-      />
+      <Tab.Screen name="Settings" options={{ tabBarLabel: "Settings" }}>
+        {(props) => <SettingsStack {...props} session={session} />}
+      </Tab.Screen>
     </Tab.Navigator>
   );
 };

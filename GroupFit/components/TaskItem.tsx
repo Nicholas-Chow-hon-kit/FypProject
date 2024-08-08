@@ -43,7 +43,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
           <Text>Notes: {task.notes}</Text>
           <Text>Priority: {task.priority}</Text>
           <Text>Notification: {task.notification}</Text>
-          <Text>Personal ID: {task.personalId}</Text>
+          <Text>Created By ID: {task.createdById}</Text>
           <Text>Completed By ID: {task.completedById}</Text>
           <Text>Assigned To ID: {task.assignedToId}</Text>
         </View>
