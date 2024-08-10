@@ -23,6 +23,11 @@ import ColorPicker, {
   HueSlider,
 } from "reanimated-color-picker";
 import ColorPickerModal from "../components/ColorPickerModal";
+import { Task } from "../types";
+
+const generateNumericID = () => {
+  return Math.floor(Math.random() * 1_000_000_000); // Generates a random number between 0 and 999,999,999
+};
 
 type TaskFormProps = NativeStackScreenProps<RootStackParamList, "TaskForm">;
 
@@ -35,7 +40,8 @@ const TaskForm: React.FC<TaskFormProps> = ({ route, navigation }) => {
   const today = new Date();
   const todayString = today.toISOString().split("T")[0];
 
-  const [task, setTask] = useState({
+  const [task, setTask] = useState<Task>({
+    id: generateNumericID(), // Add a random UUID here
     title: "",
     startDate: date || todayString,
     startTime: "09:00",
@@ -45,7 +51,8 @@ const TaskForm: React.FC<TaskFormProps> = ({ route, navigation }) => {
     grouping: "Personal",
     notes: "",
     priority: "",
-    notification: "",
+    notificationDate: null,
+    notificationTime: null,
     createdById: 1,
     completedById: undefined,
     assignedToId: 1,
@@ -61,6 +68,13 @@ const TaskForm: React.FC<TaskFormProps> = ({ route, navigation }) => {
 
   const [showColorModal, setShowColorModal] = useState(false);
 
+  const [showNotificationPickers, setShowNotificationPickers] = useState(false);
+
+  const [showNotificationDatePicker, setShowNotificationDatePicker] =
+    useState(false); // Added
+  const [showNotificationTimePicker, setShowNotificationTimePicker] =
+    useState(false); // Added
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat("en-GB", {
@@ -74,24 +88,38 @@ const TaskForm: React.FC<TaskFormProps> = ({ route, navigation }) => {
     setTask({ ...task, [key]: value });
   };
 
-  const handleDateChange = (key: "startDate" | "endDate", value: Date) => {
-    setTask({ ...task, [key]: value.toISOString().split("T")[0] });
+  const handleDateChange = (
+    key: "startDate" | "endDate" | "notificationDate",
+    value: Date | null
+  ) => {
+    if (value) {
+      setTask({ ...task, [key]: value.toISOString().split("T")[0] });
+    } else if (key === "notificationDate") {
+      setTask({ ...task, [key]: null });
+    }
   };
 
-  const handleTimeChange = (key: "startTime" | "endTime", value: Date) => {
-    const timeString = value.toTimeString().split(" ")[0].slice(0, 5);
-    setTask({ ...task, [key]: timeString });
+  const handleTimeChange = (
+    key: "startTime" | "endTime" | "notificationTime",
+    value: Date | null
+  ) => {
+    if (value) {
+      const timeString = value.toTimeString().split(" ")[0].slice(0, 5);
+      setTask({ ...task, [key]: timeString });
+    } else if (key === "notificationTime") {
+      setTask({ ...task, [key]: null });
+    }
   };
 
+  const handleRemoveNotification = () => {
+    setTask({
+      ...task,
+      notificationDate: null,
+      notificationTime: null,
+    });
+    setShowNotificationPickers(false);
+  };
   const handleSubmit = () => {
-    // Convert start and end date/time into JSON date format
-    const startDateTimeJSON = new Date(
-      `${task.startDate}T${task.startTime}`
-    ).toISOString();
-    const endDateTimeJSON = new Date(
-      `${task.endDate}T${task.endTime}`
-    ).toISOString();
-
     const formattedTask = {
       groupTitle,
       color: groupColor,
@@ -99,21 +127,22 @@ const TaskForm: React.FC<TaskFormProps> = ({ route, navigation }) => {
         {
           id: 1, // You may want to generate a unique ID or manage IDs differently
           title: task.title,
-          // JSON date format
-          startDateTime: startDateTimeJSON,
-          endDateTime: endDateTimeJSON,
+          startDate: task.startDate,
+          startTime: task.startTime,
+          endDate: task.endDate,
+          endTime: task.endTime,
           location: task.location,
           grouping: task.grouping,
           notes: task.notes,
           priority: task.priority,
-          notification: task.notification,
+          notificationDate: task.notificationDate,
+          notificationTime: task.notificationTime,
           createdById: task.createdById,
           completedById: task.completedById,
           assignedToId: task.assignedToId,
         },
       ],
     };
-
     console.log(formattedTask);
     // Handle form submission, such as saving to a database
     navigation.goBack();
@@ -270,6 +299,91 @@ const TaskForm: React.FC<TaskFormProps> = ({ route, navigation }) => {
           </View>
         </View>
 
+        {/* Notification starts here */}
+
+        {!showNotificationPickers ? (
+          <TouchableOpacity onPress={() => setShowNotificationPickers(true)}>
+            <View style={styles.inputContainer}>
+              <Ionicons name="notifications-sharp" size={24} color="black" />
+              <TextInput
+                style={styles.input}
+                editable={false}
+                placeholder="Set notification"
+              />
+            </View>
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.notificationDateTimeContainer}>
+            <View style={styles.notificationlabelContainer}>
+              <Ionicons name="notifications-sharp" size={24} color="black" />
+              <Text style={styles.labelText}>Notification date & time:</Text>
+              <TouchableOpacity
+                style={styles.removeButton}
+                onPress={handleRemoveNotification}>
+                <Ionicons name="remove-circle-sharp" size={26} color="red" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.dateTimeContainer}>
+              <View style={styles.dateContainer}>
+                <TouchableOpacity
+                  onPress={() => setShowNotificationDatePicker(true)}>
+                  <View style={styles.dateInputContainer}>
+                    <Text style={styles.dateInput}>
+                      {task.notificationDate
+                        ? formatDate(task.notificationDate)
+                        : formatDate(todayString)}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+                {showNotificationDatePicker && (
+                  <DateTimePicker
+                    value={
+                      task.notificationDate
+                        ? new Date(task.notificationDate)
+                        : new Date()
+                    }
+                    mode="date"
+                    display="spinner"
+                    onChange={(event, selectedDate) => {
+                      setShowNotificationDatePicker(Platform.OS === "ios");
+                      if (selectedDate)
+                        handleDateChange("notificationDate", selectedDate);
+                    }}
+                  />
+                )}
+              </View>
+
+              <View style={styles.timeInputContainer}>
+                <TouchableOpacity
+                  onPress={() => setShowNotificationTimePicker(true)}>
+                  <View style={styles.dateInputContainer}>
+                    <Text style={styles.dateInput}>
+                      {task.notificationTime || "Select time"}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+                {showNotificationTimePicker && (
+                  <DateTimePicker
+                    value={
+                      task.notificationTime
+                        ? new Date(`1970-01-01T${task.notificationTime}:00`)
+                        : new Date(`1970-01-01T09:00:00`)
+                    }
+                    mode="time"
+                    display="spinner"
+                    onChange={(event, selectedTime) => {
+                      setShowNotificationTimePicker(Platform.OS === "ios");
+                      if (selectedTime)
+                        handleTimeChange("notificationTime", selectedTime);
+                    }}
+                  />
+                )}
+              </View>
+            </View>
+          </View>
+        )}
+
         <View style={styles.inputContainer}>
           <Ionicons name="pencil" size={24} color="black" />
           <TextInput
@@ -287,16 +401,6 @@ const TaskForm: React.FC<TaskFormProps> = ({ route, navigation }) => {
             placeholder="Priority"
             value={task.priority}
             onChangeText={(text) => handleChange("priority", text)}
-          />
-        </View>
-
-        <View style={styles.inputContainer}>
-          <Ionicons name="notifications" size={24} color="black" />
-          <TextInput
-            style={styles.input}
-            placeholder="Notification"
-            value={task.notification}
-            onChangeText={(text) => handleChange("notification", text)}
           />
         </View>
       </ScrollView>
@@ -326,6 +430,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginTop: 18,
+  },
+  notificationlabelContainer: {
+    marginTop: 0,
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
   },
   labelText: {
     fontSize: 20,
@@ -407,6 +517,17 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 20,
     textAlign: "center",
+  },
+  notificationDateTimeContainer: {
+    marginTop: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#DCDCDC",
+    paddingBottom: 16,
+    marginLeft: 10,
+  },
+  removeButton: {
+    marginTop: 5,
+    marginLeft: "20%",
   },
 });
 

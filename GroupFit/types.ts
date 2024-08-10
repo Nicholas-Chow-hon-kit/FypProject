@@ -22,11 +22,13 @@ export interface Task {
   grouping: string;       // grouping should match the main title
   notes: string;          // notes taking over any "details"
   priority: string;       // e.g., "nil", "important", "very important"
-  notification: string;   // date and time for notification
-  CreatedbyId: number;     // personal identifier for the person who put up the task
+  notificationDate: string | null;  // date for notification, can be null
+  notificationTime: string | null;  // time for notification, can be null
+  createdById: number;     // personal identifier for the person who put up the task
   completedById?: number; // personal identifier for the person who completed the task
   assignedToId: number;   // personal identifier for the person who is assigned the task
 }
+
 
 //Task Item component props
 export interface TaskItemProps {

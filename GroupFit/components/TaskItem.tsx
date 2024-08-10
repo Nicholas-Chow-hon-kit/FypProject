@@ -42,9 +42,10 @@ const TaskItem: React.FC<TaskItemProps> = ({
           <Text>Grouping: {task.grouping}</Text>
           <Text>Notes: {task.notes}</Text>
           <Text>Priority: {task.priority}</Text>
-          <Text>Notification: {task.notification}</Text>
+          <Text>Notification Date: {task.notificationDate || "None"}</Text>
+          <Text>Notification Time: {task.notificationTime || "None"}</Text>
           <Text>Created By ID: {task.createdById}</Text>
-          <Text>Completed By ID: {task.completedById}</Text>
+          <Text>Completed By ID: {task.completedById || "None"}</Text>
           <Text>Assigned To ID: {task.assignedToId}</Text>
         </View>
       )}
