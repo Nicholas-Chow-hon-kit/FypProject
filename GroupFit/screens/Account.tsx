@@ -1,14 +1,17 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
-import { StyleSheet, View, Alert } from "react-native";
+import { StyleSheet, View, Alert, ScrollView } from "react-native";
 import { Button, Input } from "@rneui/themed";
 import { Session } from "@supabase/supabase-js";
+import { useNavigation } from "@react-navigation/native";
 
 export default function Account({ session }: { session: Session }) {
   const [loading, setLoading] = useState(true);
   const [username, setUsername] = useState("");
-  const [website, setWebsite] = useState("");
+  const [fullName, setFullName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
+
+  const navigation = useNavigation();
 
   useEffect(() => {
     if (session) getProfile();
@@ -21,16 +24,17 @@ export default function Account({ session }: { session: Session }) {
 
       const { data, error, status } = await supabase
         .from("profiles")
-        .select(`username, website, avatar_url`)
+        .select(`username, full_name, avatar_url`)
         .eq("id", session?.user.id)
         .single();
+
       if (error && status !== 406) {
         throw error;
       }
 
       if (data) {
         setUsername(data.username);
-        setWebsite(data.website);
+        setFullName(data.full_name);
         setAvatarUrl(data.avatar_url);
       }
     } catch (error) {
@@ -44,11 +48,11 @@ export default function Account({ session }: { session: Session }) {
 
   async function updateProfile({
     username,
-    website,
+    full_name,
     avatar_url,
   }: {
     username: string;
-    website: string;
+    full_name: string;
     avatar_url: string;
   }) {
     try {
@@ -58,7 +62,7 @@ export default function Account({ session }: { session: Session }) {
       const updates = {
         id: session?.user.id,
         username,
-        website,
+        full_name,
         avatar_url,
         updated_at: new Date(),
       };
@@ -67,6 +71,9 @@ export default function Account({ session }: { session: Session }) {
 
       if (error) {
         throw error;
+      } else {
+        Alert.alert("Profile updated successfully!");
+        navigation.goBack(); // Navigate back after successful update
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -78,43 +85,57 @@ export default function Account({ session }: { session: Session }) {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.verticallySpaced, styles.mt20]}>
-        <Input label="Email" value={session?.user?.email} disabled />
-      </View>
-      <View style={styles.verticallySpaced}>
-        <Input
-          label="Username"
-          value={username || ""}
-          onChangeText={(text) => setUsername(text)}
-        />
-      </View>
-      <View style={styles.verticallySpaced}>
-        <Input
-          label="Website"
-          value={website || ""}
-          onChangeText={(text) => setWebsite(text)}
-        />
-      </View>
+    <ScrollView contentContainerStyle={styles.scrollViewContainer}>
+      <View style={styles.container}>
+        <View style={[styles.verticallySpaced, styles.mt20]}>
+          <Input label="Email" value={session?.user?.email} disabled />
+        </View>
+        <View style={styles.verticallySpaced}>
+          <Input
+            label="Username"
+            value={username || ""}
+            onChangeText={(text) => setUsername(text)}
+          />
+        </View>
+        <View style={styles.verticallySpaced}>
+          <Input
+            label="Full Name"
+            value={fullName || ""}
+            onChangeText={(text) => setFullName(text)}
+          />
+        </View>
 
-      <View style={[styles.verticallySpaced, styles.mt20]}>
-        <Button
-          title={loading ? "Loading ..." : "Update"}
-          onPress={() =>
-            updateProfile({ username, website, avatar_url: avatarUrl })
-          }
-          disabled={loading}
-        />
-      </View>
+        <View style={[styles.verticallySpaced, styles.mt20]}>
+          <Button
+            title={loading ? "Loading ..." : "Update"}
+            onPress={() =>
+              updateProfile({
+                username,
+                full_name: fullName,
+                avatar_url: avatarUrl,
+              })
+            }
+            disabled={loading}
+          />
+        </View>
 
-      <View style={styles.verticallySpaced}>
-        <Button title="Sign Out" onPress={() => supabase.auth.signOut()} />
+        <View style={styles.verticallySpaced}>
+          <Button
+            title="Cancel"
+            onPress={() => navigation.goBack()}
+            type="outline"
+          />
+        </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  scrollViewContainer: {
+    flexGrow: 1,
+    justifyContent: "center",
+  },
   container: {
     marginTop: 40,
     padding: 12,

@@ -8,12 +8,13 @@ import {
   ScrollView,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, NavigationProp } from "@react-navigation/native";
 import { supabase } from "../lib/supabase"; // Adjust the path as necessary
 import { Session } from "@supabase/supabase-js";
+import { SettingsStackParamList } from "../navigation/SettingsStack";
 
 const SettingsScreen = ({ session }: { session: Session }) => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp<SettingsStackParamList>>();
 
   const handleSignOut = async () => {
     try {
@@ -26,6 +27,17 @@ const SettingsScreen = ({ session }: { session: Session }) => {
       if (error instanceof Error) {
         Alert.alert("Error", error.message);
       }
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("deletionRequests")
+        .insert([{ user_id: session.user.id }]);
+      if (error) throw error;
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -51,6 +63,14 @@ const SettingsScreen = ({ session }: { session: Session }) => {
         <Text style={styles.optionText}>Language</Text>
       </TouchableOpacity>
 
+      {/* New Account Option */}
+      <TouchableOpacity
+        style={styles.optionContainer}
+        onPress={() => navigation.navigate("Account", { session })}>
+        <Ionicons name="person-outline" size={24} color="#000" />
+        <Text style={styles.optionText}>Account</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity style={styles.optionContainer}>
         <Ionicons name="help-circle-outline" size={24} color="#000" />
         <Text style={styles.optionText}>Help & Support</Text>
@@ -59,6 +79,24 @@ const SettingsScreen = ({ session }: { session: Session }) => {
       <TouchableOpacity style={styles.optionContainer}>
         <Ionicons name="information-circle-outline" size={24} color="#000" />
         <Text style={styles.optionText}>About</Text>
+      </TouchableOpacity>
+
+      {/* Deactivate Account Option */}
+      <TouchableOpacity
+        style={styles.optionContainer}
+        onPress={() => {
+          Alert.alert(
+            "Deactivate Account",
+            "Are you sure you want to deactivate your account? This action cannot be undone.",
+            [
+              { text: "Cancel", style: "cancel" },
+              { text: "Deactivate", onPress: handleDeleteAccount },
+            ],
+            { cancelable: true }
+          );
+        }}>
+        <Ionicons name="close-circle-outline" size={24} color="black" />
+        <Text style={styles.optionText}>Deactivate Account</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
