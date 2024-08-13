@@ -27,7 +27,6 @@ const TabNavigator = ({ session }: { session: Session }) => {
           } else if (route.name === "Settings") {
             iconName = "settings";
           } else {
-            // Default icon name if route name doesn't match
             iconName = "close-circle-outline";
           }
 
@@ -37,22 +36,16 @@ const TabNavigator = ({ session }: { session: Session }) => {
         tabBarInactiveTintColor: "gray",
         tabBarHideOnKeyboard: true,
       })}>
-      <Tab.Screen
-        name="Home"
-        component={HomeStack}
-        options={{ headerShown: false }}
-      />
-      <Tab.Screen
-        name="Calendar"
-        component={CalendarStack}
-        options={{ tabBarLabel: "Calendar" }}
-      />
-      <Tab.Screen
-        name="Communities"
-        component={CommunitiesStack}
-        options={{ tabBarLabel: "Communities" }}
-      />
-      <Tab.Screen name="Settings" options={{ tabBarLabel: "Settings" }}>
+      <Tab.Screen name="Home">
+        {(props) => <HomeStack {...props} session={session} />}
+      </Tab.Screen>
+      <Tab.Screen name="Calendar">
+        {(props) => <CalendarStack {...props} session={session} />}
+      </Tab.Screen>
+      <Tab.Screen name="Communities">
+        {(props) => <CommunitiesStack {...props} session={session} />}
+      </Tab.Screen>
+      <Tab.Screen name="Settings">
         {(props) => <SettingsStack {...props} session={session} />}
       </Tab.Screen>
     </Tab.Navigator>

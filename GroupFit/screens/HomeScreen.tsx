@@ -12,6 +12,8 @@ import TaskGroup from "../components/TaskGroup";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Task, TaskGroupData } from "../types";
 import { data } from "../store/dummyData";
+import { Session } from "@supabase/supabase-js"; // Import the Session type
+import { HomeScreenProps } from "../types";
 
 const onDelete = (id: number) => {
   // Implement your delete logic here
@@ -25,7 +27,7 @@ const onShare = (task: Task) => {
   // Implement your share logic here
 };
 
-const HomeScreen = () => {
+const HomeScreen: React.FC<HomeScreenProps> = ({ session }) => {
   const renderItem = ({ item }: { item: TaskGroupData }) => (
     <TaskGroup
       groupTitle={item.groupTitle}

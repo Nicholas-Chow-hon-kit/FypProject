@@ -1,14 +1,59 @@
+import { Session } from "@supabase/supabase-js";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RouteProp } from "@react-navigation/native";
+
 //Navigation stack param list
 export type RootStackParamList = {
   HomeTabs: undefined;
-  TaskForm: { date: string | null };
+  TaskForm: TaskFormScreenParams
+  SignUpSettings: { session: Session }; 
+};
+
+// HomeStackParamList 
+export type HomeStackParamList = {
+  HomeScreen: undefined;
+  TaskFormScreen: TaskFormScreenParams;
+};
+
+// HomeScreenProps
+export type HomeScreenProps = {
+  session: Session;
 };
 
 // CalendarStackParamList 
 export type CalendarStackParamList = {
-  CalendarScreen: undefined;
+  CalendarScreen: { session: Session };
+  TaskFormScreen: TaskFormScreenParams;
 };
 
+// CommunitiesStackParamList
+export type CommunitiesStackParamList = {
+  CommunitiesScreen: { session: Session };
+  TaskFormScreen: TaskFormScreenParams;
+};
+
+export type CommunitiesScreenProps = {
+  session: Session;
+  navigation: NativeStackNavigationProp<CommunitiesStackParamList, 'CommunitiesScreen'>;
+  route: RouteProp<CommunitiesStackParamList, 'CommunitiesScreen'>;
+};
+
+export type TaskFormScreenParams = {
+  date: string | null;
+  session: Session;
+};
+
+export type TaskFormScreenProps = {
+  session: Session;
+  navigation: 
+    | NativeStackNavigationProp<RootStackParamList, 'TaskForm'>
+    | NativeStackNavigationProp<CalendarStackParamList, 'TaskFormScreen'>
+    | NativeStackNavigationProp<CommunitiesStackParamList, 'TaskFormScreen'>;
+  route: 
+    | RouteProp<RootStackParamList, 'TaskForm'>
+    | RouteProp<CalendarStackParamList, 'TaskFormScreen'>
+    | RouteProp<CommunitiesStackParamList, 'TaskFormScreen'>;
+}
 
 //Task Detail interface
 export interface Task {
