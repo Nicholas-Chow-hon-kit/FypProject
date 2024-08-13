@@ -1,14 +1,9 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { CommunitiesScreenProps } from "../types";
 
-const CommunitiesScreen = ({
-  session,
-  navigation,
-  route,
-}: CommunitiesScreenProps) => {
+const CommunitiesScreen = () => {
   return (
-    <View>
+    <View style={styles.container}>
       <Text>Communities Screen</Text>
     </View>
   );

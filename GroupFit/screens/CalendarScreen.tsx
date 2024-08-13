@@ -10,22 +10,15 @@ import {
 import GridCalendar from "../components/GridCalendar";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList, Events, CalendarStackParamList } from "../types";
-import { Session } from "@supabase/supabase-js";
+import { RootStackParamList, Events } from "../types";
 
-type CalendarScreenProps = {
-  session: Session;
-};
-
-const CalendarScreen: React.FC<CalendarScreenProps> = ({ session }) => {
+const CalendarScreen: React.FC = () => {
   const [events, setEvents] = useState<Events>({});
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [lastPressedDate, setLastPressedDate] = useState<string | null>(null);
 
   const navigation =
-    useNavigation<
-      NativeStackNavigationProp<CalendarStackParamList, "CalendarScreen">
-    >();
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   useEffect(() => {
     const today = new Date();
@@ -47,7 +40,7 @@ const CalendarScreen: React.FC<CalendarScreenProps> = ({ session }) => {
 
   const handleDayPress = (dateString: string) => {
     if (selectedDate === dateString && lastPressedDate === dateString) {
-      navigation.navigate("TaskFormScreen", { date: dateString, session });
+      navigation.navigate("TaskForm", { date: dateString });
     } else {
       setSelectedDate(dateString);
       setLastPressedDate(dateString);
@@ -62,10 +55,7 @@ const CalendarScreen: React.FC<CalendarScreenProps> = ({ session }) => {
           <View style={styles.addButtonContainer}>
             <Pressable
               onPress={() =>
-                navigation.navigate("TaskFormScreen", {
-                  date: selectedDate,
-                  session,
-                })
+                navigation.navigate("TaskForm", { date: selectedDate })
               }>
               <Text style={styles.addButton}>+</Text>
             </Pressable>

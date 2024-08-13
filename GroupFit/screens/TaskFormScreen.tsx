@@ -23,17 +23,19 @@ import ColorPicker, {
   HueSlider,
 } from "reanimated-color-picker";
 import ColorPickerModal from "../components/ColorPickerModal";
-import { Task, TaskFormScreenProps } from "../types";
+import { Task } from "../types";
 
 const generateNumericID = () => {
   return Math.floor(Math.random() * 1_000_000_000); // Generates a random number between 0 and 999,999,999
 };
 
-const TaskForm: React.FC<TaskFormScreenProps> = ({
-  route,
-  navigation,
-  session,
-}) => {
+type TaskFormProps = NativeStackScreenProps<RootStackParamList, "TaskForm">;
+
+type ColorObject = {
+  hex: string;
+};
+
+const TaskForm: React.FC<TaskFormProps> = ({ route, navigation }) => {
   const { date } = route.params;
   const today = new Date();
   const todayString = today.toISOString().split("T")[0];
@@ -51,9 +53,9 @@ const TaskForm: React.FC<TaskFormScreenProps> = ({
     priority: "",
     notificationDate: null,
     notificationTime: null,
-    createdById: 1, // Use session data, swap later
+    createdById: 1,
     completedById: undefined,
-    assignedToId: 1, // Use session data,swap later
+    assignedToId: 1,
   });
 
   const [groupTitle, setGroupTitle] = useState("Personal");
@@ -150,7 +152,7 @@ const TaskForm: React.FC<TaskFormScreenProps> = ({
     navigation.goBack();
   };
 
-  const onSelectColor = ({ hex }: { hex: string }) => {
+  const onSelectColor = ({ hex }: ColorObject) => {
     setGroupColor(hex);
     console.log(hex);
   };
