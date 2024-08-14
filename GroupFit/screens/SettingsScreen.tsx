@@ -12,16 +12,19 @@ import { useNavigation, NavigationProp } from "@react-navigation/native";
 import { supabase } from "../lib/supabase"; // Adjust the path as necessary
 import { Session } from "@supabase/supabase-js";
 import { SettingsStackParamList } from "../navigation/SettingsStack";
+import User from "../watermelondb/Model/User";
+import { useAuth } from "../contexts/AuthProvider";
 
-const SettingsScreen = ({ session }: { session: Session }) => {
+const SettingsScreen = () => {
   const navigation = useNavigation<NavigationProp<SettingsStackParamList>>();
+  const { user, session } = useAuth();
 
   const handleSignOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       Alert.alert("Signed Out", "You have been signed out.");
-      console.log(`User with UUID ${session.user.id} has signed out.`);
+      console.log(`User with UUID ${session?.user?.id} has signed out.`);
       // No need to navigate manually, the session state change will handle it
     } catch (error) {
       if (error instanceof Error) {
@@ -32,6 +35,10 @@ const SettingsScreen = ({ session }: { session: Session }) => {
 
   const handleDeleteAccount = async () => {
     try {
+      if (!session?.user?.id) {
+        Alert.alert("Error", "User session is not available.");
+        return;
+      }
       const { data, error } = await supabase
         .from("deletionRequests")
         .insert([{ user_id: session.user.id }]);
@@ -66,7 +73,7 @@ const SettingsScreen = ({ session }: { session: Session }) => {
       {/* New Account Option */}
       <TouchableOpacity
         style={styles.optionContainer}
-        onPress={() => navigation.navigate("Account", { session })}>
+        onPress={() => navigation.navigate("Account")}>
         <Ionicons name="person-outline" size={24} color="#000" />
         <Text style={styles.optionText}>Account</Text>
       </TouchableOpacity>

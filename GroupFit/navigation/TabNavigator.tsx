@@ -6,12 +6,15 @@ import CommunitiesStack from "./CommunitiesStack";
 import SettingsStack from "./SettingsStack";
 import { Ionicons } from "@expo/vector-icons";
 import { Session } from "@supabase/supabase-js";
+import { UserContext } from "../contexts/AuthProvider";
+import { useContext } from "react";
 
 const Tab = createBottomTabNavigator();
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
-const TabNavigator = ({ session }: { session: Session }) => {
+const TabNavigator = () => {
+  const { session } = useContext(UserContext);
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -52,9 +55,11 @@ const TabNavigator = ({ session }: { session: Session }) => {
         component={CommunitiesStack}
         options={{ tabBarLabel: "Communities" }}
       />
-      <Tab.Screen name="Settings" options={{ tabBarLabel: "Settings" }}>
-        {(props) => <SettingsStack {...props} session={session} />}
-      </Tab.Screen>
+      <Tab.Screen
+        name="Settings"
+        component={SettingsStack}
+        options={{ tabBarLabel: "Settings" }}
+      />
     </Tab.Navigator>
   );
 };

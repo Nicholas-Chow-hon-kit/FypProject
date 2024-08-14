@@ -1,42 +1,24 @@
-import { useState, useEffect } from "react";
-import { supabase } from "./lib/supabase";
-import Auth from "./components/Auth";
-import { View } from "react-native";
-import { Session } from "@supabase/supabase-js";
-import AppNavigator from "./navigation/AppNavigator";
+import React from "react";
+import { AuthProvider } from "./contexts/AuthProvider"; // Adjust the path
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import Auth from "./screens/Auth";
+import TabNavigator from "./navigation/TabNavigator";
+import TaskFormScreen from "./screens/TaskFormScreen";
+import { RootStackParamList } from "./types"; // Adjust the path
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
-  const [session, setSession] = useState<Session | null>(null);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) {
-        console.log(`User with UUID ${session.user.id} signed in.`);
-      }
-    });
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log(event, session);
-        if (event === "SIGNED_IN") {
-          setSession(session);
-          console.log(`User with UUID ${session!.user.id} signed in.`);
-        } else if (event === "SIGNED_OUT") {
-          setSession(session);
-        }
-      }
-    );
-
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
-
   return (
-    <View style={{ flex: 1 }}>
-      {/* If there is a session and a user, render the AppNavigator with the session prop, otherwise render the Auth component */}
-      {session && session.user ? <AppNavigator session={session} /> : <Auth />}
-    </View>
+    <NavigationContainer>
+      <AuthProvider>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Auth" component={Auth} />
+          <Stack.Screen name="HomeTabs" component={TabNavigator} />
+          <Stack.Screen name="TaskForm" component={TaskFormScreen} />
+        </Stack.Navigator>
+      </AuthProvider>
+    </NavigationContainer>
   );
 }
