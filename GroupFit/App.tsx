@@ -18,9 +18,12 @@ export default function App() {
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        setSession(session);
-        if (event === "SIGNED_IN" && session) {
-          console.log(`User with UUID ${session.user.id} signed in.`);
+        console.log(event, session);
+        if (event === "SIGNED_IN") {
+          setSession(session);
+          console.log(`User with UUID ${session!.user.id} signed in.`);
+        } else if (event === "SIGNED_OUT") {
+          setSession(session);
         }
       }
     );

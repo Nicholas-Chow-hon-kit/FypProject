@@ -9,6 +9,7 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
 
   async function signInWithEmail() {
+    console.log("Sign in with email", email, password);
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({
       email: email,
@@ -43,6 +44,7 @@ export default function Auth() {
           value={email}
           placeholder="email@address.com"
           autoCapitalize={"none"}
+          autoComplete="email"
         />
       </View>
       <View style={styles.verticallySpaced}>
@@ -54,6 +56,7 @@ export default function Auth() {
           secureTextEntry={true}
           placeholder="Password"
           autoCapitalize={"none"}
+          autoComplete="password"
         />
       </View>
       <View style={[styles.verticallySpaced, styles.mt20]}>
