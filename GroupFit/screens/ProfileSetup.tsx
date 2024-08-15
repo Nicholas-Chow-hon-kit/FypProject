@@ -2,20 +2,19 @@ import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import { StyleSheet, View, Alert, ScrollView } from "react-native";
 import { Button, Input } from "@rneui/themed";
-import { Session } from "@supabase/supabase-js";
 import { useNavigation } from "@react-navigation/native";
-
 import { useAuth } from "../contexts/AuthProvider";
-import { UserContextType } from "../contexts/AuthProvider.types";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../types";
 
-export default function Account() {
+export default function ProfileSetup() {
   const [loading, setLoading] = useState(true);
   const [username, setUsername] = useState("");
   const [fullName, setFullName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
 
-  const navigation = useNavigation();
-
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { user, session } = useAuth();
 
   useEffect(() => {
@@ -30,7 +29,7 @@ export default function Account() {
       const { data, error, status } = await supabase
         .from("profiles")
         .select(`username, full_name, avatar_url`)
-        .eq("id", user?.id)
+        .eq("id", user?.id) // Ensure this matches the column name in your database
         .single();
 
       if (error && status !== 406) {
@@ -60,12 +59,17 @@ export default function Account() {
     full_name: string;
     avatar_url: string;
   }) {
+    if (!username || !full_name) {
+      Alert.alert("Error", "Username and Full Name are required.");
+      return;
+    }
+
     try {
       setLoading(true);
       if (!session?.user) throw new Error("No user on the session!");
 
       const updates = {
-        id: session?.user.id,
+        id: session?.user.id, // Ensure this matches the column name in your database
         username,
         full_name,
         avatar_url,
@@ -78,7 +82,7 @@ export default function Account() {
         throw error;
       } else {
         Alert.alert("Profile updated successfully!");
-        navigation.goBack(); // Navigate back after successful update
+        navigation.navigate("HomeTabs"); // Navigate to HomeTabs after successful update
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -93,7 +97,7 @@ export default function Account() {
     <ScrollView contentContainerStyle={styles.scrollViewContainer}>
       <View style={styles.container}>
         <View style={[styles.verticallySpaced, styles.mt20]}>
-          <Input label="Email" value={session?.user?.email} disabled />
+          <Input label="Email" value={user?.email} disabled />
         </View>
         <View style={styles.verticallySpaced}>
           <Input
@@ -121,14 +125,6 @@ export default function Account() {
               })
             }
             disabled={loading}
-          />
-        </View>
-
-        <View style={styles.verticallySpaced}>
-          <Button
-            title="Cancel"
-            onPress={() => navigation.goBack()}
-            type="outline"
           />
         </View>
       </View>

@@ -17,15 +17,16 @@ import { useAuth } from "../contexts/AuthProvider";
 
 const SettingsScreen = () => {
   const navigation = useNavigation<NavigationProp<SettingsStackParamList>>();
-  const { user, session } = useAuth();
+  const { user, session, setSession } = useAuth();
 
   const handleSignOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       Alert.alert("Signed Out", "You have been signed out.");
-      console.log(`User with UUID ${session?.user?.id} has signed out.`);
+      console.log(`User with UUID ${user?.id} has signed out.`);
       // No need to navigate manually, the session state change will handle it
+      setSession(null);
     } catch (error) {
       if (error instanceof Error) {
         Alert.alert("Error", error.message);

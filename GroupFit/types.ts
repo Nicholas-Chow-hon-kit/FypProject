@@ -3,6 +3,7 @@ export type RootStackParamList = {
   HomeTabs: undefined;
   TaskForm: { date: string | null };
   Auth: undefined; 
+  ProfileSetup: undefined;
 };
 
 // CalendarStackParamList 

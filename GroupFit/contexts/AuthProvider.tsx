@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }: UserProviderProps) => {
           navigation.navigate("Auth");
         } else {
           setSession(data.session);
-          navigation.navigate("HomeTabs");
+          await checkProfileCompletion(data.session.user.id);
         }
       } catch (error: any) {
         if (error instanceof AuthError) {
@@ -53,10 +53,14 @@ export const AuthProvider = ({ children }: UserProviderProps) => {
   // Auth state change listener
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, newSession) => {
-        if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
-          if (!session) setSession(newSession);
-          navigation.navigate("HomeTabs");
+      async (event, newSession) => {
+        console.log("Auth state changed:", event); // Log the auth state change
+        if (event === "SIGNED_IN") {
+          setSession(newSession);
+          console.log(`User with UUID ${newSession?.user.id} has signed in.`);
+          if (newSession?.user.id) {
+            await checkProfileCompletion(newSession.user.id);
+          }
         } else if (event === "SIGNED_OUT") {
           navigation.navigate("Auth");
         }
@@ -67,6 +71,28 @@ export const AuthProvider = ({ children }: UserProviderProps) => {
       authListener.subscription.unsubscribe(); // Unsubscribe to prevent memory leaks
     };
   }, [session]);
+
+  // Function to check if the profile is complete
+  const checkProfileCompletion = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("username, full_name")
+        .eq("id", userId)
+        .single();
+
+      if (error) throw error;
+
+      if (!data || data.username === null || data.full_name === null) {
+        navigation.navigate("ProfileSetup");
+      } else {
+        navigation.navigate("HomeTabs");
+      }
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      navigation.navigate("Auth");
+    }
+  };
 
   // Derive user from session
   const user = useMemo(() => session?.user ?? null, [session]);
