@@ -48,7 +48,10 @@ const TabNavigator = () => {
       <Tab.Screen
         name="Calendar"
         component={CalendarStack}
-        options={{ tabBarLabel: "Calendar" }}
+        options={{
+          tabBarLabel: "Calendar",
+          headerShown: false,
+        }}
       />
       <Tab.Screen
         name="Communities"

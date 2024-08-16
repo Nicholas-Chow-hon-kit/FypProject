@@ -11,6 +11,7 @@ import GridCalendar from "../components/GridCalendar";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList, Events } from "../types";
+import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 
 const CalendarScreen: React.FC = () => {
   const [events, setEvents] = useState<Events>({});
@@ -51,15 +52,21 @@ const CalendarScreen: React.FC = () => {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="default" />
       <View style={styles.container}>
-        <View style={styles.calendarWrapper}>
-          <View style={styles.addButtonContainer}>
-            <Pressable
-              onPress={() =>
-                navigation.navigate("TaskForm", { date: selectedDate })
-              }>
-              <Text style={styles.addButton}>+</Text>
-            </Pressable>
+        <View style={styles.header}>
+          <Pressable
+            style={styles.addButton}
+            onPress={() =>
+              navigation.navigate("TaskForm", { date: selectedDate })
+            }>
+            <Text style={styles.addButtonText}>+</Text>
+          </Pressable>
+          <Text style={styles.title}>General Calendar</Text>
+          <View style={styles.icons}>
+            <MaterialIcons name="filter-list" size={24} style={styles.icon} />
+            <MaterialIcons name="more-vert" size={24} style={styles.icon} />
           </View>
+        </View>
+        <View style={styles.calendarWrapper}>
           <GridCalendar
             events={events}
             selectedDate={selectedDate}
@@ -80,21 +87,41 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FFFFFF",
     width: "100%",
+    paddingHorizontal: "5%",
+    paddingVertical: "5%",
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  title: {
+    fontSize: 25,
+    textAlign: "center",
+    fontWeight: "bold",
+  },
+  icons: {
+    flexDirection: "row",
+  },
+  icon: {
+    marginLeft: 10,
+  },
+  addButton: {
+    width: 50,
+    height: 50,
+    backgroundColor: "white",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  addButtonText: {
+    fontSize: 30,
+    color: "black",
   },
   calendarWrapper: {
     flex: 1,
-    transform: [{ scale: 0.9 }],
+    transform: [{ scale: 1 }],
     marginTop: 10,
-  },
-  addButtonContainer: {
-    position: "absolute",
-    top: 10,
-    left: 10,
-    zIndex: 1,
-  },
-  addButton: {
-    fontSize: 24,
-    color: "black",
+    marginBottom: 20,
   },
 });
 

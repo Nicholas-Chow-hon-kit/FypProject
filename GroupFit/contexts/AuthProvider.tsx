@@ -27,11 +27,14 @@ export const AuthProvider = ({ children }: UserProviderProps) => {
     const initializeUser = async () => {
       setIsLoading(true);
       try {
+        console.log("Initializing user...");
         const { data, error } = await supabase.auth.getSession();
         if (error) throw error;
         if (!data.session) {
+          console.log("No session found, navigating to Auth...");
           navigation.navigate("Auth");
         } else {
+          console.log("Session found, setting session...");
           setSession(data.session);
           await checkProfileCompletion(data.session.user.id);
         }
@@ -41,8 +44,10 @@ export const AuthProvider = ({ children }: UserProviderProps) => {
         } else {
           console.error("Unexpected Error:", error);
         }
+        console.log("Error occurred, navigating to Auth...");
         navigation.navigate("Auth");
       } finally {
+        console.log("Setting isLoading to false...");
         setTimeout(() => setIsLoading(false), 100);
       }
     };
@@ -56,24 +61,30 @@ export const AuthProvider = ({ children }: UserProviderProps) => {
       async (event, newSession) => {
         console.log("Auth state changed:", event); // Log the auth state change
         if (event === "SIGNED_IN") {
+          console.log("User signing in, setting session...");
           setSession(newSession);
           console.log(`User with UUID ${newSession?.user.id} has signed in.`);
           if (newSession?.user.id) {
             await checkProfileCompletion(newSession.user.id);
           }
         } else if (event === "SIGNED_OUT") {
+          console.log("User signed out, navigating to Auth...");
           navigation.navigate("Auth");
         }
       }
     );
 
     return () => {
+      console.log("Unsubscribing from auth state changes...");
       authListener.subscription.unsubscribe(); // Unsubscribe to prevent memory leaks
     };
   }, [session]);
 
   // Function to check if the profile is complete
   const checkProfileCompletion = async (userId: string) => {
+    console.log(
+      `Checking profile completion for user with UUID ${userId} is running.`
+    );
     try {
       const { data, error } = await supabase
         .from("profiles")
@@ -84,12 +95,15 @@ export const AuthProvider = ({ children }: UserProviderProps) => {
       if (error) throw error;
 
       if (!data || data.username === null || data.full_name === null) {
+        console.log("Profile incomplete, navigating to ProfileSetup...");
         navigation.navigate("ProfileSetup");
       } else {
+        console.log("Profile complete, navigating to HomeTabs...");
         navigation.navigate("HomeTabs");
       }
     } catch (error) {
       console.error("Error fetching user profile:", error);
+      console.log("Error occurred, navigating to Auth...");
       navigation.navigate("Auth");
     }
   };
