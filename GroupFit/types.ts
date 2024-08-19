@@ -1,7 +1,7 @@
 //Navigation stack param list
 export type RootStackParamList = {
   HomeTabs: undefined;
-  TaskForm: { date: string | null; grouping: string };
+  TaskForm: { date: string | null; grouping?: string };
   Auth: undefined; 
   ProfileSetup: undefined;
 };
@@ -26,9 +26,9 @@ export interface Task {
   priority: string;       // e.g., "nil", "important", "very important"
   notificationDate: string | null;  // date for notification, can be null
   notificationTime: string | null;  // time for notification, can be null
-  createdById: number;     // personal identifier for the person who put up the task
-  completedById?: number; // personal identifier for the person who completed the task
-  assignedToId: number;   // personal identifier for the person who is assigned the task
+  createdById: string;     // personal identifier for the person who put up the task
+  completedById?: string; // personal identifier for the person who completed the task
+  // assignedToId: string[];   // personal identifier for the person who is assigned the task
 }
 
 

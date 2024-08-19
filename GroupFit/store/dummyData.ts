@@ -16,9 +16,9 @@ const data = [
         priority: "important",
         notificationDate: "Tue, 18 Jun",
         notificationTime: "07:50",
-        createdById: 101,
-        completedById: 201, // ID of the person who completed the task
-        assignedToId: 101, // ID of the person assigned the task (same as createdById if personal task)
+        createdById: "101",
+        completedById: "201", // ID of the person who completed the task
+        assignedToId: ["101"], // ID of the person assigned the task (same as createdById if personal task)
       },
       {
         id: 2,
@@ -33,8 +33,8 @@ const data = [
         priority: "very important",
         notificationDate: "Tue, 18 Jun",
         notificationTime: "08:20",
-        createdById: 101,
-        assignedToId: 101, // ID of the person assigned the task (same as createdById if personal task)
+        createdById: "101",
+        assignedToId: ["101"], // ID of the person assigned the task (same as createdById if personal task)
       },
     ],
   },
@@ -55,8 +55,8 @@ const data = [
         priority: "important",
         notificationDate: "Wed, 19 Jun",
         notificationTime: "09:50",
-        createdById: 102,
-        assignedToId: 103, // ID of the person assigned the task
+        createdById: "102",
+        assignedToId: ["103"], // ID of the person assigned the task
       },
       {
         id: 2,
@@ -71,8 +71,8 @@ const data = [
         priority: "very important",
         notificationDate: "Thu, 20 Jun",
         notificationTime: "13:50",
-        createdById: 102,
-        assignedToId: 103, // ID of the person assigned the task
+        createdById: "102",
+        assignedToId: ["103"], // ID of the person assigned the task
       },
     ],
   },

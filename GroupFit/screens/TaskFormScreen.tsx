@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   TextInput,
@@ -17,6 +17,11 @@ import DatePickerComponent from "../components/DatePickerComponent";
 import TimePickerComponent from "../components/TimePickerComponent";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList, Events, Task } from "../types";
+import { Picker } from "@react-native-picker/picker";
+import { useTasks } from "../hooks/useTasks";
+import { TaskData } from "../contexts/AuthProvider.types";
+import { supabase } from "../lib/supabase";
+import { useAuth } from "../contexts/AuthProvider";
 
 const generateNumericID = () => {
   return Math.floor(Math.random() * 1_000_000_000);
@@ -33,6 +38,10 @@ const TaskForm: React.FC<TaskFormProps> = ({ route, navigation }) => {
   const today = new Date();
   const todayString = today.toISOString().split("T")[0];
 
+  const { user, session } = useAuth();
+
+  const { createTask, groupings, members, setSelectedGrouping } = useTasks();
+
   const [task, setTask] = useState<Task>({
     id: generateNumericID(),
     title: "",
@@ -46,17 +55,51 @@ const TaskForm: React.FC<TaskFormProps> = ({ route, navigation }) => {
     priority: "",
     notificationDate: null,
     notificationTime: null,
-    createdById: 1,
+    createdById: String(user),
     completedById: undefined,
-    assignedToId: 1,
+    // assignedToId: [String(user)], // Store an array of IDs
   });
 
   const [groupTitle, setGroupTitle] = useState("Personal");
   const [groupColor, setGroupColor] = useState("#54c5c9");
   const [showColorModal, setShowColorModal] = useState(false);
   const [showNotificationPickers, setShowNotificationPickers] = useState(false);
+  const [suggestedGroupings, setSuggestedGroupings] = useState<
+    { id: string; name: string }[]
+  >([]);
+  const [selectedMember, setSelectedMember] = useState<string | null>(null);
 
-  const handleChange = (key: keyof typeof task, value: string) => {
+  useEffect(() => {
+    if (task.grouping === "") {
+      // Fetch groupings that the user is part of
+      supabase
+        .from("grouping_members")
+        .select("grouping_id")
+        .eq("user_id", user)
+        .then(({ data: userGroups, error }) => {
+          if (userGroups) {
+            console.log(userGroups);
+            const groupingIds = userGroups.map((item) => item.grouping_id);
+            supabase
+              .from("groupings")
+              .select("id, name")
+              .in("id", groupingIds)
+              .then(({ data: groupingData, error }) => {
+                if (groupingData) {
+                  setSuggestedGroupings(groupingData);
+                }
+              });
+          }
+        });
+    } else {
+      setSuggestedGroupings([]);
+    }
+  }, [task.grouping]);
+
+  const handleChange = (
+    key: keyof typeof task,
+    value: string | number | string[]
+  ) => {
     setTask({ ...task, [key]: value });
   };
 
@@ -87,30 +130,32 @@ const TaskForm: React.FC<TaskFormProps> = ({ route, navigation }) => {
   };
 
   const handleSubmit = () => {
-    const formattedTask = {
-      groupTitle,
-      color: groupColor,
-      tasks: [
-        {
-          id: 1,
-          title: task.title,
-          startDate: task.startDate,
-          startTime: task.startTime,
-          endDate: task.endDate,
-          endTime: task.endTime,
-          location: task.location,
-          grouping: task.grouping,
-          notes: task.notes,
-          priority: task.priority,
-          notificationDate: task.notificationDate,
-          notificationTime: task.notificationTime,
-          createdById: task.createdById,
-          completedById: task.completedById,
-          assignedToId: task.assignedToId,
-        },
-      ],
+    const formattedTask: Omit<TaskData, "notification"> & {
+      notification?: string;
+    } = {
+      title: task.title,
+      start_date_time: `${task.startDate}T${task.startTime}:00`,
+      end_date_time: `${task.endDate}T${task.endTime}:00`,
+      location: task.location,
+      grouping_id: task.grouping,
+      notes: task.notes,
+      priority: task.priority,
+      // assigned_to: task.assignedToId,
+      created_by: String(user),
     };
-    console.log(formattedTask);
+
+    if (task.notificationDate && task.notificationTime) {
+      formattedTask.notification = `${task.notificationDate}T${task.notificationTime}:00`;
+    }
+
+    const finalTask: TaskData = {
+      ...formattedTask,
+      ...(formattedTask.notification && {
+        notification: formattedTask.notification,
+      }),
+    };
+
+    createTask(finalTask);
     navigation.goBack();
   };
 
@@ -121,6 +166,23 @@ const TaskForm: React.FC<TaskFormProps> = ({ route, navigation }) => {
   const onSelectColor = ({ hex }: ColorObject) => {
     setGroupColor(hex);
   };
+
+  // const handleAddMember = () => {
+  //   if (selectedMember && !task.assignedToId.includes(selectedMember)) {
+  //     setTask({
+  //       ...task,
+  //       assignedToId: [...task.assignedToId, selectedMember],
+  //     });
+  //     setSelectedMember(null);
+  //   }
+  // };
+
+  // const handleRemoveMember = (memberId: string) => {
+  //   setTask({
+  //     ...task,
+  //     assignedToId: task.assignedToId.filter((id) => id !== memberId),
+  //   });
+  // };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -191,12 +253,22 @@ const TaskForm: React.FC<TaskFormProps> = ({ route, navigation }) => {
 
         <View style={styles.inputContainer}>
           <Ionicons name="people" size={24} color="black" />
-          <TextInput
-            style={styles.input}
-            placeholder="Grouping"
-            value={task.grouping}
-            onChangeText={(text) => handleChange("grouping", text)}
-          />
+          <Picker
+            selectedValue={task.grouping}
+            onValueChange={(itemValue) => {
+              handleChange("grouping", itemValue);
+              setSelectedGrouping(itemValue);
+              console.log(itemValue);
+            }}
+            style={styles.picker}>
+            {groupings.map((grouping) => (
+              <Picker.Item
+                key={grouping.id}
+                label={grouping.name}
+                value={grouping.id}
+              />
+            ))}
+          </Picker>
           <View style={styles.colorContainer}>
             <TouchableOpacity
               style={[styles.colorCircle, { backgroundColor: groupColor }]}
@@ -210,6 +282,59 @@ const TaskForm: React.FC<TaskFormProps> = ({ route, navigation }) => {
             />
           </View>
         </View>
+
+        {suggestedGroupings.length > 0 && (
+          <View style={styles.suggestedGroupingsContainer}>
+            {suggestedGroupings.map((grouping) => (
+              <TouchableOpacity
+                key={grouping.id}
+                onPress={() => {
+                  handleChange("grouping", grouping.id);
+                  setSelectedGrouping(grouping.id);
+                }}>
+                <Text style={styles.suggestedGroupingText}>
+                  {grouping.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+        {/* // TODO: Display the task assignent when there is time */}
+        {/* <View style={styles.inputContainer}>
+          <Ionicons name="person" size={24} color="black" />
+          <Picker
+            selectedValue={selectedMember}
+            onValueChange={(itemValue) => setSelectedMember(itemValue)}
+            style={styles.picker}>
+            {members.map((member) => (
+              <Picker.Item
+                key={member.id}
+                label={member.name}
+                value={member.id}
+              />
+            ))}
+          </Picker>
+          <TouchableOpacity onPress={handleAddMember} style={styles.addButton}>
+            <Text style={styles.addButtonText}>Add</Text>
+          </TouchableOpacity>
+        </View> */}
+
+        {/* {task.assignedToId.length > 0 && (
+          <View style={styles.assignedMembersContainer}>
+            {task.assignedToId.map((memberId) => {
+              const member = members.find((m) => m.id === memberId);
+              return (
+                <View key={memberId} style={styles.assignedMember}>
+                  <Text>{member ? member.name : memberId}</Text>
+                  <TouchableOpacity
+                    onPress={() => handleRemoveMember(memberId)}>
+                    <Ionicons name="close-circle" size={24} color="red" />
+                  </TouchableOpacity>
+                </View>
+              );
+            })}
+          </View>
+        )} */}
 
         {!showNotificationPickers ? (
           <TouchableOpacity onPress={() => setShowNotificationPickers(true)}>
@@ -398,6 +523,41 @@ const styles = StyleSheet.create({
   removeButton: {
     marginTop: 5,
     marginLeft: "20%",
+  },
+  picker: {
+    flex: 1,
+    marginLeft: 8,
+  },
+  suggestedGroupingsContainer: {
+    marginTop: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#DCDCDC",
+    paddingBottom: 16,
+  },
+  suggestedGroupingText: {
+    fontSize: 18,
+    padding: 8,
+  },
+  addButton: {
+    marginLeft: 8,
+    padding: 8,
+    backgroundColor: "#DCDCDC",
+    borderRadius: 4,
+  },
+  addButtonText: {
+    fontSize: 16,
+  },
+  assignedMembersContainer: {
+    marginTop: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#DCDCDC",
+    paddingBottom: 16,
+  },
+  assignedMember: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 8,
   },
 });
 

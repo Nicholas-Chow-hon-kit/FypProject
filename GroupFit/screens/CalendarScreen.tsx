@@ -10,13 +10,16 @@ import {
 import GridCalendar from "../components/GridCalendar";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList, Events } from "../types";
+import { RootStackParamList } from "../types";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
+import { useTasks } from "../hooks/useTasks";
+import { Events, Event } from "../components/GridCalendar";
 
 const CalendarScreen: React.FC = () => {
-  const [events, setEvents] = useState<Events>({});
+  const { tasks, createTask } = useTasks();
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [lastPressedDate, setLastPressedDate] = useState<string | null>(null);
+  const [events, setEvents] = useState<Events>({});
 
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -24,20 +27,25 @@ const CalendarScreen: React.FC = () => {
   useEffect(() => {
     const today = new Date();
     const todayString = today.toISOString().split("T")[0];
-
-    const initialEvents = {
-      [todayString]: {
-        marked: true,
-        dotColor: "blue",
-        events: [],
-        isToday: true,
-      },
-    };
-
-    setEvents(initialEvents);
     setSelectedDate(todayString);
     setLastPressedDate(todayString);
   }, []);
+
+  useEffect(() => {
+    const eventsMap: Events = {};
+
+    tasks.forEach((task) => {
+      const dateString = task.start_date_time; // Assuming startDate is the date string
+      if (!eventsMap[dateString]) {
+        eventsMap[dateString] = {
+          events: [],
+        };
+      }
+      eventsMap[dateString].events.push({ title: task.title });
+    });
+
+    setEvents(eventsMap);
+  }, [tasks]);
 
   const handleDayPress = (dateString: string) => {
     if (selectedDate === dateString && lastPressedDate === dateString) {
@@ -68,7 +76,7 @@ const CalendarScreen: React.FC = () => {
         </View>
         <View style={styles.calendarWrapper}>
           <GridCalendar
-            events={events}
+            events={events} // Use the transformed events
             selectedDate={selectedDate}
             onDayPress={handleDayPress}
           />
