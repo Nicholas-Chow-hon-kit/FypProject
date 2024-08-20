@@ -36,6 +36,7 @@ const GridCalendar: React.FC<GridCalendarProps> = ({
   selectedDate,
   onDayPress,
 }) => {
+  // console.log("GridCalendar Events:", events); // debugging line
   const theme = {
     weekVerticalMargin: 0,
     calendarBackground: "#FFFFFF",

@@ -10,8 +10,7 @@ export const createTask = async (taskData: {
   notes: string;
   priority: string;
   notification?: string;
-  // assigned_to: string[]; 
-  created_by: string; 
+  created_by: string;
 }) => {
   try {
     const { data: taskDataResponse, error: taskError } = await supabase
@@ -29,29 +28,18 @@ export const createTask = async (taskData: {
           created_by: taskData.created_by,
         },
       ])
-      .select('uuid');
+      .select('id');
 
-    if (taskError) throw taskError;
+    if (taskError) {
+      console.error("Error creating task:", taskError);
+      throw taskError;
+    }
 
-    const taskId = taskDataResponse?.[0].uuid;
+    const taskId = taskDataResponse?.[0].id;
 
     if (!taskId) {
       throw new Error("Task ID is undefined");
     }
-
-    // Comment out assignment related code
-    // const assignmentPromises = taskData.assigned_to.map((userId) => {
-    //   return supabase
-    //     .from("task_assignments")
-    //     .insert([
-    //       {
-    //         task_id: taskId,
-    //         user_id: userId,
-    //       },
-    //     ]);
-    // });
-
-    // await Promise.all(assignmentPromises);
 
     return taskDataResponse;
   } catch (error) {
