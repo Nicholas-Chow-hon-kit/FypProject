@@ -7,12 +7,13 @@ export interface UserContextType {
   setSession: (session: Session | null) => void;
   isLoading: boolean;
   tasks: {
-    createTask: (taskData: TaskData) => Promise<{ id: string }[]>;
+    createTask: (taskData: TaskData) => Promise<{ uuid: string }[]>;
     getTasks: (userId: string) => Promise<Task[]>;
     updateTask: (taskId: string, taskData: TaskData) => Promise<void>;
     deleteTask: (taskId: string) => Promise<void>;
   };
 }
+
 export type UserProviderProps = {
   children: ReactNode;
 };

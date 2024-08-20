@@ -15,7 +15,8 @@ export const UserContext = createContext<UserContextType>({
   setSession: () => {},
   isLoading: true,
   tasks: {
-    createTask: (taskData: TaskData) => Promise.resolve([] as { id: string }[]),
+    createTask: (taskData: TaskData) =>
+      Promise.resolve([] as { uuid: string }[]),
     getTasks: (userId: string) => Promise.resolve([] as Task[]),
     updateTask: (taskId: string, taskData: TaskData) => Promise.resolve(),
     deleteTask: (taskId: string) => Promise.resolve(),
@@ -44,8 +45,6 @@ export const AuthProvider = ({ children }: UserProviderProps) => {
         } else {
           console.log("Session found, setting session...");
           setSession(data.session);
-          // Refresh the token before login
-          await supabase.auth.refreshSession();
           await checkProfileCompletion(data.session.user.id);
         }
       } catch (error: any) {
@@ -98,6 +97,9 @@ export const AuthProvider = ({ children }: UserProviderProps) => {
     try {
       console.log("Fetching user profile...");
 
+      // Refresh the token before making the query
+      await supabase.auth.refreshSession();
+
       const { data: profileData, error } = await supabase
         .from("profiles")
         .select("username, full_name")
@@ -138,6 +140,9 @@ export const AuthProvider = ({ children }: UserProviderProps) => {
         }
         return createTask({
           ...taskData,
+          //   assigned_to: Array.isArray(taskData.assigned_to)
+          //     ? taskData.assigned_to
+          //     : [taskData.assigned_to],
           created_by: user.id,
         });
       },

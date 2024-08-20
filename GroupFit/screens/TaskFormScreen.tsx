@@ -256,9 +256,9 @@ const TaskForm: React.FC<TaskFormProps> = ({ route, navigation }) => {
           <Picker
             selectedValue={task.grouping}
             onValueChange={(itemValue) => {
-              setSelectedGrouping(itemValue);
               handleChange("grouping", itemValue);
-              // console.log(itemValue);
+              setSelectedGrouping(itemValue);
+              console.log(itemValue);
             }}
             style={styles.picker}>
             {groupings.map((grouping) => (

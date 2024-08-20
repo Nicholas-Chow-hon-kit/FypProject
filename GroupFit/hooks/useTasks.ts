@@ -71,7 +71,7 @@ export const useTasks = () => {
       throw new Error("User not authenticated");
     }
     const result = await taskActions.createTask(taskData);
-    const newTaskId = result[0].id;
+    const newTaskId = result[0].uuid;
 
     const fullTask = await taskActions.getTasks(user.id).then((tasks) =>
       tasks.find((task) => task.id === newTaskId)

@@ -32,11 +32,10 @@ const CalendarScreen: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // console.log("Tasks:", tasks); // Debugging line
     const eventsMap: Events = {};
 
     tasks.forEach((task) => {
-      const dateString = task.start_date_time.split("T")[0]; // Extract the date part
+      const dateString = task.start_date_time; // Assuming startDate is the date string
       if (!eventsMap[dateString]) {
         eventsMap[dateString] = {
           events: [],
@@ -45,7 +44,6 @@ const CalendarScreen: React.FC = () => {
       eventsMap[dateString].events.push({ title: task.title });
     });
 
-    // console.log("Events Map:", eventsMap); // Debugging line
     setEvents(eventsMap);
   }, [tasks]);
 
