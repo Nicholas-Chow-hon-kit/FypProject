@@ -1,14 +1,49 @@
-import { useState, useEffect } from "react";
-import { useAuth } from "../contexts/AuthProvider";
-import { Task, TaskData } from "../contexts/TaskProvider.types";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { supabase } from "../lib/supabase";
+import { Task, TaskData } from "../contexts/TaskProvider.types";
 import { createTask, getTasks, updateTask, deleteTask } from "../lib/tasks";
+import { useAuth } from "./AuthProvider";
+import { TaskProviderProps } from "./TaskProvider.types";
 
-export const useTasks = () => {
+interface TaskContextType {
+  tasks: Task[];
+  groupings: { id: string; name: string }[];
+  members: { id: string; name: string; role: string }[];
+  selectedGrouping: string | null;
+  createTask: (taskData: TaskData) => Promise<void>;
+  updateTask: (taskId: string, taskData: TaskData) => Promise<void>;
+  deleteTask: (taskId: string) => Promise<void>;
+  setSelectedGrouping: (groupingId: string | null) => void;
+}
+
+const TaskContext = createContext<TaskContextType>({
+  tasks: [],
+  groupings: [],
+  members: [],
+  selectedGrouping: null,
+  createTask: async () => {},
+  updateTask: async () => {},
+  deleteTask: async () => {},
+  setSelectedGrouping: () => {},
+});
+
+export const useTasks = () => useContext(TaskContext);
+
+export const TaskProvider = ({ children }: TaskProviderProps) => {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [groupings, setGroupings] = useState<{ id: string; name: string }[]>([]);
-  const [members, setMembers] = useState<{ id: string; name: string; role: string }[]>([]);
+  const [groupings, setGroupings] = useState<{ id: string; name: string }[]>(
+    []
+  );
+  const [members, setMembers] = useState<
+    { id: string; name: string; role: string }[]
+  >([]);
   const [selectedGrouping, setSelectedGrouping] = useState<string | null>(null);
 
   useEffect(() => {
@@ -47,20 +82,27 @@ export const useTasks = () => {
           .from("grouping_members")
           .select("user_id, role")
           .eq("grouping_id", selectedGrouping);
-  
+
         const profilesData = await supabase
           .from("profiles")
           .select("id, full_name");
-  
-        const combinedData = memberData?.data?.map((member) => {
-          const profile = profilesData?.data?.find((profile) => profile.id === member.user_id);
-          return { id: member.user_id, name: profile?.full_name, role: member.role };
-        }) || [];
-  
+
+        const combinedData =
+          memberData?.data?.map((member) => {
+            const profile = profilesData?.data?.find(
+              (profile) => profile.id === member.user_id
+            );
+            return {
+              id: member.user_id,
+              name: profile?.full_name,
+              role: member.role,
+            };
+          }) || [];
+
         // Ensure combinedData is not undefined before calling setMembers
         setMembers(combinedData);
       };
-  
+
       fetchMembers();
     } else {
       setMembers([]);
@@ -75,7 +117,7 @@ export const useTasks = () => {
       ...taskData,
       created_by: user.id,
     });
-    setTasks((prevTasks) => [...prevTasks, newTask]);
+    setTasks((prevTasks) => [...prevTasks, newTask as Task]);
   };
 
   const handleUpdateTask = async (taskId: string, taskData: TaskData) => {
@@ -84,7 +126,9 @@ export const useTasks = () => {
     }
     await updateTask(taskId, taskData);
     setTasks((prevTasks) =>
-      prevTasks.map((task) => (task.id === taskId ? { ...task, ...taskData } : task))
+      prevTasks.map((task) =>
+        task.id === taskId ? { ...task, ...taskData } : task
+      )
     );
   };
 
@@ -96,14 +140,19 @@ export const useTasks = () => {
     setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
   };
 
-  return {
-    tasks,
-    groupings,
-    members,
-    selectedGrouping,
-    createTask: handleCreateTask,
-    updateTask: handleUpdateTask,
-    deleteTask: handleDeleteTask,
-    setSelectedGrouping,
-  };
+  const value = useMemo(
+    () => ({
+      tasks,
+      groupings,
+      members,
+      selectedGrouping,
+      createTask: handleCreateTask,
+      updateTask: handleUpdateTask,
+      deleteTask: handleDeleteTask,
+      setSelectedGrouping,
+    }),
+    [tasks, groupings, members, selectedGrouping]
+  );
+
+  return <TaskContext.Provider value={value}>{children}</TaskContext.Provider>;
 };

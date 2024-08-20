@@ -5,7 +5,6 @@ import { Session } from "@supabase/supabase-js";
 import { AuthError } from "@supabase/supabase-js";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import { RootStackParamList } from "../types";
-import { Task, TaskData } from "../contexts/AuthProvider.types";
 import { createTask, getTasks, updateTask, deleteTask } from "../lib/tasks";
 
 // Create a context to hold user-related state
@@ -14,13 +13,6 @@ export const UserContext = createContext<UserContextType>({
   session: null,
   setSession: () => {},
   isLoading: true,
-  tasks: {
-    createTask: (taskData: TaskData) =>
-      Promise.resolve([] as { uuid: string }[]),
-    getTasks: (userId: string) => Promise.resolve([] as Task[]),
-    updateTask: (taskId: string, taskData: TaskData) => Promise.resolve(),
-    deleteTask: (taskId: string) => Promise.resolve(),
-  },
 });
 
 export const useAuth = () => React.useContext(UserContext);
@@ -44,6 +36,7 @@ export const AuthProvider = ({ children }: UserProviderProps) => {
           navigation.navigate("Auth");
         } else {
           console.log("Session found, setting session...");
+
           setSession(data.session);
           await checkProfileCompletion(data.session.user.id);
         }
@@ -97,9 +90,6 @@ export const AuthProvider = ({ children }: UserProviderProps) => {
     try {
       console.log("Fetching user profile...");
 
-      // Refresh the token before making the query
-      await supabase.auth.refreshSession();
-
       const { data: profileData, error } = await supabase
         .from("profiles")
         .select("username, full_name")
@@ -132,35 +122,8 @@ export const AuthProvider = ({ children }: UserProviderProps) => {
   // Derive user from session
   const user = useMemo(() => session?.user ?? null, [session]);
 
-  const tasks = useMemo(() => {
-    return {
-      createTask: async (taskData: TaskData) => {
-        if (!user) {
-          throw new Error("User not authenticated");
-        }
-        return createTask({
-          ...taskData,
-          //   assigned_to: Array.isArray(taskData.assigned_to)
-          //     ? taskData.assigned_to
-          //     : [taskData.assigned_to],
-          created_by: user.id,
-        });
-      },
-      getTasks: async (userId: string) => {
-        return getTasks(userId);
-      },
-      updateTask: async (taskId: string, taskData: TaskData) => {
-        return updateTask(taskId, taskData);
-      },
-      deleteTask: async (taskId: string) => {
-        return deleteTask(taskId);
-      },
-    };
-  }, [user]);
-
   return (
-    <UserContext.Provider
-      value={{ user, session, setSession, isLoading, tasks }}>
+    <UserContext.Provider value={{ user, session, setSession, isLoading }}>
       {children}
     </UserContext.Provider>
   );

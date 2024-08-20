@@ -7,6 +7,7 @@ import TabNavigator from "./navigation/TabNavigator";
 import TaskFormScreen from "./screens/TaskFormScreen";
 import ProfileSetup from "./screens/ProfileSetup";
 import { RootStackParamList } from "./types";
+import { TaskProvider } from "./contexts/TaskProvider";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -14,12 +15,14 @@ export default function App() {
   return (
     <NavigationContainer>
       <AuthProvider>
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="Auth" component={Auth} />
-          <Stack.Screen name="ProfileSetup" component={ProfileSetup} />
-          <Stack.Screen name="HomeTabs" component={TabNavigator} />
-          <Stack.Screen name="TaskForm" component={TaskFormScreen} />
-        </Stack.Navigator>
+        <TaskProvider>
+          <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="Auth" component={Auth} />
+            <Stack.Screen name="ProfileSetup" component={ProfileSetup} />
+            <Stack.Screen name="HomeTabs" component={TabNavigator} />
+            <Stack.Screen name="TaskForm" component={TaskFormScreen} />
+          </Stack.Navigator>
+        </TaskProvider>
       </AuthProvider>
     </NavigationContainer>
   );

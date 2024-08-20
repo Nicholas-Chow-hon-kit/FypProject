@@ -43,7 +43,7 @@ const CalendarScreen: React.FC = () => {
       }
       eventsMap[dateString].events.push({ title: task.title });
     });
-
+    console.log(eventsMap);
     setEvents(eventsMap);
   }, [tasks]);
 

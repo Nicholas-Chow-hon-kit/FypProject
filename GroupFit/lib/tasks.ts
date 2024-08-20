@@ -1,18 +1,8 @@
 import { supabase } from "./supabase";
-import { Task, TaskData } from "../contexts/AuthProvider.types";
+import { Task, TaskData } from "../contexts/TaskProvider.types";
 
-export const createTask = async (taskData: {
-  title: string;
-  start_date_time: string;
-  end_date_time: string;
-  location: string;
-  grouping_id: string;
-  notes: string;
-  priority: string;
-  notification?: string;
-  // assigned_to: string[]; 
-  created_by: string; 
-}) => {
+
+export const createTask = async (taskData: TaskData): Promise<Task> => {
   try {
     const { data: taskDataResponse, error: taskError } = await supabase
       .from("tasks")
@@ -29,36 +19,24 @@ export const createTask = async (taskData: {
           created_by: taskData.created_by,
         },
       ])
-      .select('uuid');
+      .select('*') // Select all fields of the newly created task
+      .single(); // Return a single object instead of an array
 
-    if (taskError) throw taskError;
-
-    const taskId = taskDataResponse?.[0].uuid;
-
-    if (!taskId) {
-      throw new Error("Task ID is undefined");
+    if (taskError) {
+      console.error("Error creating task:", taskError);
+      throw taskError;
     }
 
-    // Comment out assignment related code
-    // const assignmentPromises = taskData.assigned_to.map((userId) => {
-    //   return supabase
-    //     .from("task_assignments")
-    //     .insert([
-    //       {
-    //         task_id: taskId,
-    //         user_id: userId,
-    //       },
-    //     ]);
-    // });
+    if (!taskDataResponse) {
+      throw new Error("Task data is undefined");
+    }
 
-    // await Promise.all(assignmentPromises);
-
-    return taskDataResponse;
+    return taskDataResponse as Task;
   } catch (error) {
     console.error("Error creating task:", error);
     throw error;
   }
-};
+}
 
 export const getTasks = async (userId: string): Promise<Task[]> => {
   try {
