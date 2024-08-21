@@ -19,7 +19,7 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList, Events, Task } from "../types";
 import { Picker } from "@react-native-picker/picker";
 import { useTasks } from "../hooks/useTasks";
-import { TaskData } from "../contexts/AuthProvider.types";
+import { TaskData } from "../contexts/TaskProvider.types";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthProvider";
 
@@ -34,13 +34,27 @@ type ColorObject = {
 };
 
 const TaskForm: React.FC<TaskFormProps> = ({ route, navigation }) => {
-  const { date, grouping = "Personal" } = route.params;
+  const { date, groupParams = "Personal" } = route.params;
   const today = new Date();
   const todayString = today.toISOString().split("T")[0];
 
   const { user, session } = useAuth();
 
   const { createTask, groupings, members, setSelectedGrouping } = useTasks();
+
+  const getDefaultGroupingOption = () => {
+    const matchedGrouping = groupings.find(
+      (grouping) => grouping.name === groupParams
+    );
+    return matchedGrouping ? matchedGrouping.id : "default_value";
+  };
+
+  useEffect(() => {
+    setTask((prevTask) => ({
+      ...prevTask,
+      grouping: getDefaultGroupingOption(),
+    }));
+  }, [groupings, groupParams]);
 
   const [task, setTask] = useState<Task>({
     id: generateNumericID(),
@@ -50,7 +64,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ route, navigation }) => {
     endDate: date || todayString,
     endTime: "10:00",
     location: "",
-    grouping: grouping,
+    grouping: getDefaultGroupingOption(),
     notes: "",
     priority: "",
     notificationDate: null,
@@ -70,31 +84,13 @@ const TaskForm: React.FC<TaskFormProps> = ({ route, navigation }) => {
   const [selectedMember, setSelectedMember] = useState<string | null>(null);
 
   useEffect(() => {
-    if (task.grouping === "") {
-      // Fetch groupings that the user is part of
-      supabase
-        .from("grouping_members")
-        .select("grouping_id")
-        .eq("user_id", user)
-        .then(({ data: userGroups, error }) => {
-          if (userGroups) {
-            console.log(userGroups);
-            const groupingIds = userGroups.map((item) => item.grouping_id);
-            supabase
-              .from("groupings")
-              .select("id, name")
-              .in("id", groupingIds)
-              .then(({ data: groupingData, error }) => {
-                if (groupingData) {
-                  setSuggestedGroupings(groupingData);
-                }
-              });
-          }
-        });
-    } else {
-      setSuggestedGroupings([]);
+    const selectedGrouping = groupings.find(
+      (grouping) => grouping.id === task.grouping
+    );
+    if (selectedGrouping) {
+      setGroupColor(selectedGrouping.default_color);
     }
-  }, [task.grouping]);
+  }, [task.grouping, groupings]);
 
   const handleChange = (
     key: keyof typeof task,
@@ -129,7 +125,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ route, navigation }) => {
     setShowNotificationPickers(false);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const formattedTask: Omit<TaskData, "notification"> & {
       notification?: string;
     } = {
@@ -154,6 +150,12 @@ const TaskForm: React.FC<TaskFormProps> = ({ route, navigation }) => {
         notification: formattedTask.notification,
       }),
     };
+
+    // Update the grouping color in the database
+    await supabase
+      .from("groupings")
+      .update({ default_color: groupColor })
+      .eq("id", task.grouping);
 
     createTask(finalTask);
     navigation.goBack();

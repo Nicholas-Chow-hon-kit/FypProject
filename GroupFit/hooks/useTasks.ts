@@ -7,7 +7,7 @@ import { createTask, getTasks, updateTask, deleteTask } from "../lib/tasks";
 export const useTasks = () => {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [groupings, setGroupings] = useState<{ id: string; name: string }[]>([]);
+  const [groupings, setGroupings] = useState<{ id: string; name: string; default_color: string }[]>([]);
   const [members, setMembers] = useState<{ id: string; name: string; role: string }[]>([]);
   const [selectedGrouping, setSelectedGrouping] = useState<string | null>(null);
 
@@ -23,7 +23,7 @@ export const useTasks = () => {
             const groupingIds = userGroups.map((item) => item.grouping_id);
             supabase
               .from("groupings")
-              .select("id, name")
+              .select("id, name, default_color")
               .in("id", groupingIds)
               .then(({ data: groupingData, error }) => {
                 if (groupingData) {

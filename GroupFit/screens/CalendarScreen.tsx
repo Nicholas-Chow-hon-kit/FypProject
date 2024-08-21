@@ -35,7 +35,7 @@ const CalendarScreen: React.FC = () => {
     const eventsMap: Events = {};
 
     tasks.forEach((task) => {
-      const dateString = task.start_date_time; // Assuming startDate is the date string
+      const dateString = task.start_date_time.split("T")[0]; // Ensure date is in 'YYYY-MM-DD' format
       if (!eventsMap[dateString]) {
         eventsMap[dateString] = {
           events: [],
@@ -43,7 +43,8 @@ const CalendarScreen: React.FC = () => {
       }
       eventsMap[dateString].events.push({ title: task.title });
     });
-    console.log(eventsMap);
+
+    console.log("Transformed Events:", eventsMap); // Log the transformed events
     setEvents(eventsMap);
   }, [tasks]);
 

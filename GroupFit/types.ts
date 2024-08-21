@@ -1,7 +1,7 @@
 //Navigation stack param list
 export type RootStackParamList = {
   HomeTabs: undefined;
-  TaskForm: { date: string | null; grouping?: string };
+  TaskForm: { date: string | null; groupParams?: string };
   Auth: undefined; 
   ProfileSetup: undefined;
 };
