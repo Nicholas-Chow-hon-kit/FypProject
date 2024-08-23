@@ -49,6 +49,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 10,
+    marginLeft: 5,
   },
   titleContainer: {
     flexDirection: "row",
@@ -61,13 +62,13 @@ const styles = StyleSheet.create({
   taskCount: {
     fontSize: 14,
     backgroundColor: "#eee",
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    borderRadius: 22,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
     marginLeft: 10,
   },
   addIcon: {
-    marginLeft: 10,
+    marginRight: 5,
   },
 });
 

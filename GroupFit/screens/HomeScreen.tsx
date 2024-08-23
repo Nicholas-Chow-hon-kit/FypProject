@@ -9,9 +9,9 @@ import {
 } from "react-native";
 import Header from "../components/Header";
 import TaskGroup from "../components/TaskGroup";
-import { MaterialIcons } from "@expo/vector-icons";
 import { Task, TaskGroupData } from "../types";
 import { useTasks } from "../contexts/TaskProvider";
+import Dropdown from "../components/Dropdown"; // Import the custom dropdown component
 
 const onDelete = (id: string) => {
   // Implement your delete logic here
@@ -28,11 +28,50 @@ const onShare = (task: Task) => {
 const HomeScreen = () => {
   const { tasks, groupings } = useTasks();
   const [taskGroups, setTaskGroups] = useState<TaskGroupData[]>([]);
+  const [selectedPeriod, setSelectedPeriod] = useState("week");
 
   useEffect(() => {
     if (tasks.length > 0 && groupings.length > 0) {
+      const currentDate = new Date();
+      let filteredTasks = tasks;
+
+      if (selectedPeriod === "day") {
+        filteredTasks = tasks.filter((task) => {
+          const startDate = new Date(task.start_date_time);
+          return (
+            startDate.getDate() === currentDate.getDate() &&
+            startDate.getMonth() === currentDate.getMonth() &&
+            startDate.getFullYear() === currentDate.getFullYear()
+          );
+        });
+      } else if (selectedPeriod === "week") {
+        const startOfWeek = new Date(
+          currentDate.setDate(currentDate.getDate() - currentDate.getDay() + 1)
+        );
+        const endOfWeek = new Date(
+          currentDate.setDate(currentDate.getDate() - currentDate.getDay() + 7)
+        );
+        filteredTasks = tasks.filter((task) => {
+          const startDate = new Date(task.start_date_time);
+          return startDate >= startOfWeek && startDate <= endOfWeek;
+        });
+      } else if (selectedPeriod === "month") {
+        filteredTasks = tasks.filter((task) => {
+          const startDate = new Date(task.start_date_time);
+          return (
+            startDate.getMonth() === currentDate.getMonth() &&
+            startDate.getFullYear() === currentDate.getFullYear()
+          );
+        });
+      } else if (selectedPeriod === "year") {
+        filteredTasks = tasks.filter((task) => {
+          const startDate = new Date(task.start_date_time);
+          return startDate.getFullYear() === currentDate.getFullYear();
+        });
+      }
+
       const groupedTasks: { [key: string]: Task[] } = {};
-      tasks.forEach((task) => {
+      filteredTasks.forEach((task) => {
         const startDateTime = new Date(task.start_date_time);
         const endDateTime = new Date(task.end_date_time);
 
@@ -76,7 +115,7 @@ const HomeScreen = () => {
 
       setTaskGroups(taskGroupsData);
     }
-  }, [tasks, groupings]);
+  }, [tasks, groupings, selectedPeriod]);
 
   const renderItem = ({ item }: { item: TaskGroupData }) => (
     <TaskGroup
@@ -89,6 +128,13 @@ const HomeScreen = () => {
     />
   );
 
+  const periodOptions = [
+    { label: "Tasks for the Day", value: "day" },
+    { label: "Tasks for the Week", value: "week" },
+    { label: "Tasks for the Month", value: "month" },
+    { label: "Tasks for the Year", value: "year" },
+  ];
+
   return (
     <SafeAreaView style={styles.safeAreaContainer}>
       <StatusBar barStyle="default" />
@@ -97,8 +143,11 @@ const HomeScreen = () => {
           <View style={styles.headerContainer}>
             <Header />
             <View style={styles.periodSelector}>
-              <Text style={styles.periodText}>Tasks for the week</Text>
-              <MaterialIcons name="arrow-drop-down" size={24} />
+              <Dropdown
+                options={periodOptions}
+                selectedValue={selectedPeriod}
+                onValueChange={(value) => setSelectedPeriod(value)}
+              />
             </View>
           </View>
         }
@@ -123,10 +172,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 10,
-  },
-  periodText: {
-    fontSize: 18,
-    fontWeight: "bold",
   },
 });
 
