@@ -1,3 +1,4 @@
+// src/navigation/TabNavigator.tsx
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import HomeStack from "./HomeStack";
@@ -5,16 +6,17 @@ import CalendarStack from "./CalendarStack";
 import CommunitiesStack from "./CommunitiesStack";
 import SettingsStack from "./SettingsStack";
 import { Ionicons } from "@expo/vector-icons";
-import { Session } from "@supabase/supabase-js";
-import { UserContext } from "../contexts/AuthProvider";
-import { useContext } from "react";
 
 const Tab = createBottomTabNavigator();
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
-const TabNavigator = () => {
-  const { session } = useContext(UserContext);
+const TabNavigator = ({ routeName }: { routeName?: string }) => {
+  const hideTabBar =
+    routeName === "DayViewCalendar" ||
+    routeName === "TaskForm" ||
+    routeName === "UpdateForm";
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -39,6 +41,7 @@ const TabNavigator = () => {
         tabBarActiveTintColor: "#007AFF",
         tabBarInactiveTintColor: "gray",
         tabBarHideOnKeyboard: true,
+        tabBarStyle: { display: hideTabBar ? "none" : "flex" },
       })}>
       <Tab.Screen
         name="Home"
@@ -52,6 +55,7 @@ const TabNavigator = () => {
           tabBarLabel: "Calendar",
           headerShown: false,
         }}
+        initialParams={{ routeName }}
       />
       <Tab.Screen
         name="Communities"

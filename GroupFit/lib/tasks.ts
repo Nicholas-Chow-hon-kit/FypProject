@@ -89,15 +89,31 @@ export const updateTask = async (taskId: string, taskData: TaskData): Promise<vo
     const { error } = await supabase
       .from("tasks")
       .update(taskData)
-      .eq("uuid", taskId);
+      .eq("id", taskId); 
 
-    if (error) throw error;
+    if (error) {
+      console.error("Error updating task:", error);
+      throw error;
+    }
   } catch (error) {
     console.error("Error updating task:", error);
     throw error;
   }
 };
 
-export const deleteTask = async (taskId: string) => {
-  // Implementation
+export const deleteTask = async (taskId: string): Promise<void> => {
+  try {
+    const { error } = await supabase
+      .from("tasks")
+      .delete()
+      .eq("id", taskId); // Use 'id' instead of 'uuid' as per your table schema
+
+    if (error) {
+      console.error("Error deleting task:", error);
+      throw error;
+    }
+  } catch (error) {
+    console.error("Error deleting task:", error);
+    throw error;
+  }
 };

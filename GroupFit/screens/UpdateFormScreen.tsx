@@ -8,26 +8,23 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
-  Modal,
-  Button,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import ColorPickerModal from "../components/ColorPickerModal";
 import DatePickerComponent from "../components/DatePickerComponent";
 import TimePickerComponent from "../components/TimePickerComponent";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { RootStackParamList, Events, Task } from "../types";
+import { RootStackParamList, Task } from "../types";
 import { Picker } from "@react-native-picker/picker";
 import { useTasks } from "../contexts/TaskProvider";
 import { TaskData } from "../contexts/TaskProvider.types";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthProvider";
 
-const generateNumericID = () => {
-  return Math.floor(Math.random() * 1_000_000_000);
-};
-
-type TaskFormProps = NativeStackScreenProps<RootStackParamList, "TaskForm"> & {
+type UpdateFormProps = NativeStackScreenProps<
+  RootStackParamList,
+  "UpdateForm"
+> & {
   routeName?: string;
 };
 
@@ -35,96 +32,59 @@ type ColorObject = {
   hex: string;
 };
 
-const TaskForm: React.FC<TaskFormProps> = ({
+const UpdateForm: React.FC<UpdateFormProps> = ({
   route,
   navigation,
   routeName,
 }) => {
-  const { date, groupParams = "Personal" } = route.params;
-  const today = new Date();
-  const todayString = today.toISOString().split("T")[0];
+  const { task } = route.params;
+  const { user } = useAuth();
+  const { groupings, updateTask } = useTasks();
 
-  const { user, session } = useAuth();
-
-  const { createTask, groupings, members, setSelectedGrouping } = useTasks();
-
-  const getDefaultGroupingOption = () => {
-    const matchedGrouping = groupings.find(
-      (grouping) => grouping.name === groupParams
-    );
-    return matchedGrouping ? matchedGrouping.id : "default_value";
-  };
-
-  useEffect(() => {
-    setTask((prevTask) => ({
-      ...prevTask,
-      grouping: getDefaultGroupingOption(),
-    }));
-  }, [groupings, groupParams]);
-
-  const [task, setTask] = useState<Task>({
-    id: String(generateNumericID()),
-    title: "",
-    startDate: date || todayString,
-    startTime: "09:00",
-    endDate: date || todayString,
-    endTime: "10:00",
-    location: "",
-    grouping: getDefaultGroupingOption(),
-    notes: "",
-    priority: "",
-    notificationDate: null,
-    notificationTime: null,
-    createdById: String(user),
-    completedById: undefined,
-    // assignedToId: [String(user)], // Store an array of IDs
-  });
-
-  const [groupTitle, setGroupTitle] = useState("Personal");
+  const [editedTask, setEditedTask] = useState<Task>(task);
   const [groupColor, setGroupColor] = useState("#54c5c9");
   const [showColorModal, setShowColorModal] = useState(false);
   const [showNotificationPickers, setShowNotificationPickers] = useState(false);
-  const [suggestedGroupings, setSuggestedGroupings] = useState<
-    { id: string; name: string }[]
-  >([]);
-  const [selectedMember, setSelectedMember] = useState<string | null>(null);
 
   useEffect(() => {
     const selectedGrouping = groupings.find(
-      (grouping) => grouping.id === task.grouping
+      (grouping) => grouping.id === editedTask.grouping
     );
     if (selectedGrouping) {
       setGroupColor(selectedGrouping.default_color);
     }
-  }, [task.grouping, groupings]);
+  }, [editedTask.grouping, groupings]);
 
   const handleChange = (
-    key: keyof typeof task,
+    key: keyof typeof editedTask,
     value: string | number | string[]
   ) => {
-    setTask({ ...task, [key]: value });
+    setEditedTask({ ...editedTask, [key]: value });
   };
 
   const handleDateChange = (key: keyof Task, value: Date | null) => {
     if (value) {
-      setTask({ ...task, [key]: value.toISOString().split("T")[0] });
+      setEditedTask({
+        ...editedTask,
+        [key]: value.toISOString().split("T")[0],
+      });
     } else if (key === "notificationDate") {
-      setTask({ ...task, [key]: null });
+      setEditedTask({ ...editedTask, [key]: null });
     }
   };
 
   const handleTimeChange = (key: keyof Task, value: Date | null) => {
     if (value) {
       const timeString = value.toTimeString().split(" ")[0].slice(0, 5);
-      setTask({ ...task, [key]: timeString });
+      setEditedTask({ ...editedTask, [key]: timeString });
     } else if (key === "notificationTime") {
-      setTask({ ...task, [key]: null });
+      setEditedTask({ ...editedTask, [key]: null });
     }
   };
 
   const handleRemoveNotification = () => {
-    setTask({
-      ...task,
+    setEditedTask({
+      ...editedTask,
       notificationDate: null,
       notificationTime: null,
     });
@@ -135,19 +95,18 @@ const TaskForm: React.FC<TaskFormProps> = ({
     const formattedTask: Omit<TaskData, "notification"> & {
       notification?: string;
     } = {
-      title: task.title,
-      start_date_time: `${task.startDate}T${task.startTime}:00`,
-      end_date_time: `${task.endDate}T${task.endTime}:00`,
-      location: task.location,
-      grouping_id: task.grouping,
-      notes: task.notes,
-      priority: task.priority,
-      // assigned_to: task.assignedToId,
+      title: editedTask.title,
+      start_date_time: `${editedTask.startDate}T${editedTask.startTime}:00`,
+      end_date_time: `${editedTask.endDate}T${editedTask.endTime}:00`,
+      location: editedTask.location,
+      grouping_id: editedTask.grouping,
+      notes: editedTask.notes,
+      priority: editedTask.priority,
       created_by: String(user),
     };
 
-    if (task.notificationDate && task.notificationTime) {
-      formattedTask.notification = `${task.notificationDate}T${task.notificationTime}:00`;
+    if (editedTask.notificationDate && editedTask.notificationTime) {
+      formattedTask.notification = `${editedTask.notificationDate}T${editedTask.notificationTime}:00`;
     }
 
     const finalTask: TaskData = {
@@ -161,9 +120,9 @@ const TaskForm: React.FC<TaskFormProps> = ({
     await supabase
       .from("groupings")
       .update({ default_color: groupColor })
-      .eq("id", task.grouping);
+      .eq("id", editedTask.grouping);
 
-    createTask(finalTask);
+    updateTask(editedTask.id, finalTask);
     navigation.goBack();
   };
 
@@ -175,23 +134,6 @@ const TaskForm: React.FC<TaskFormProps> = ({
     setGroupColor(hex);
   };
 
-  // const handleAddMember = () => {
-  //   if (selectedMember && !task.assignedToId.includes(selectedMember)) {
-  //     setTask({
-  //       ...task,
-  //       assignedToId: [...task.assignedToId, selectedMember],
-  //     });
-  //     setSelectedMember(null);
-  //   }
-  // };
-
-  // const handleRemoveMember = (memberId: string) => {
-  //   setTask({
-  //     ...task,
-  //     assignedToId: task.assignedToId.filter((id) => id !== memberId),
-  //   });
-  // };
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
@@ -199,7 +141,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
           <TextInput
             style={styles.input}
             placeholder="Title"
-            value={task.title}
+            value={editedTask.title}
             onChangeText={(text) => handleChange("title", text)}
           />
         </View>
@@ -212,14 +154,14 @@ const TaskForm: React.FC<TaskFormProps> = ({
         <View style={styles.dateSelectionContainer}>
           <View style={styles.dateTimeContainer}>
             <DatePickerComponent
-              date={task.startDate}
+              date={editedTask.startDate}
               onDateChange={(selectedDate) =>
                 handleDateChange("startDate", selectedDate)
               }
               label="Start Date"
             />
             <DatePickerComponent
-              date={task.endDate}
+              date={editedTask.endDate}
               onDateChange={(selectedDate) =>
                 handleDateChange("endDate", selectedDate)
               }
@@ -233,14 +175,14 @@ const TaskForm: React.FC<TaskFormProps> = ({
 
           <View style={styles.timeContainer}>
             <TimePickerComponent
-              time={task.startTime}
+              time={editedTask.startTime}
               onTimeChange={(selectedTime) =>
                 handleTimeChange("startTime", selectedTime)
               }
               label="Start Time"
             />
             <TimePickerComponent
-              time={task.endTime}
+              time={editedTask.endTime}
               onTimeChange={(selectedTime) =>
                 handleTimeChange("endTime", selectedTime)
               }
@@ -254,7 +196,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
           <TextInput
             style={styles.input}
             placeholder="Location"
-            value={task.location}
+            value={editedTask.location}
             onChangeText={(text) => handleChange("location", text)}
           />
         </View>
@@ -262,11 +204,9 @@ const TaskForm: React.FC<TaskFormProps> = ({
         <View style={styles.inputContainer}>
           <Ionicons name="people" size={24} color="black" />
           <Picker
-            selectedValue={task.grouping}
+            selectedValue={editedTask.grouping}
             onValueChange={(itemValue) => {
               handleChange("grouping", itemValue);
-              setSelectedGrouping(itemValue);
-              console.log(itemValue);
             }}
             style={styles.picker}>
             {groupings.map((grouping) => (
@@ -290,59 +230,6 @@ const TaskForm: React.FC<TaskFormProps> = ({
             />
           </View>
         </View>
-
-        {suggestedGroupings.length > 0 && (
-          <View style={styles.suggestedGroupingsContainer}>
-            {suggestedGroupings.map((grouping) => (
-              <TouchableOpacity
-                key={grouping.id}
-                onPress={() => {
-                  handleChange("grouping", grouping.id);
-                  setSelectedGrouping(grouping.id);
-                }}>
-                <Text style={styles.suggestedGroupingText}>
-                  {grouping.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-        {/* // TODO: Display the task assignent when there is time */}
-        {/* <View style={styles.inputContainer}>
-          <Ionicons name="person" size={24} color="black" />
-          <Picker
-            selectedValue={selectedMember}
-            onValueChange={(itemValue) => setSelectedMember(itemValue)}
-            style={styles.picker}>
-            {members.map((member) => (
-              <Picker.Item
-                key={member.id}
-                label={member.name}
-                value={member.id}
-              />
-            ))}
-          </Picker>
-          <TouchableOpacity onPress={handleAddMember} style={styles.addButton}>
-            <Text style={styles.addButtonText}>Add</Text>
-          </TouchableOpacity>
-        </View> */}
-
-        {/* {task.assignedToId.length > 0 && (
-          <View style={styles.assignedMembersContainer}>
-            {task.assignedToId.map((memberId) => {
-              const member = members.find((m) => m.id === memberId);
-              return (
-                <View key={memberId} style={styles.assignedMember}>
-                  <Text>{member ? member.name : memberId}</Text>
-                  <TouchableOpacity
-                    onPress={() => handleRemoveMember(memberId)}>
-                    <Ionicons name="close-circle" size={24} color="red" />
-                  </TouchableOpacity>
-                </View>
-              );
-            })}
-          </View>
-        )} */}
 
         {!showNotificationPickers ? (
           <TouchableOpacity onPress={() => setShowNotificationPickers(true)}>
@@ -369,14 +256,14 @@ const TaskForm: React.FC<TaskFormProps> = ({
 
             <View style={styles.dateTimeContainer}>
               <DatePickerComponent
-                date={task.notificationDate || todayString}
+                date={editedTask.notificationDate || editedTask.startDate}
                 onDateChange={(selectedDate) =>
                   handleDateChange("notificationDate", selectedDate)
                 }
                 label="Notification Date"
               />
               <TimePickerComponent
-                time={task.notificationTime || "09:00"}
+                time={editedTask.notificationTime || editedTask.startTime}
                 onTimeChange={(selectedTime) =>
                   handleTimeChange("notificationTime", selectedTime)
                 }
@@ -391,7 +278,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
           <TextInput
             style={styles.input}
             placeholder="Notes"
-            value={task.notes}
+            value={editedTask.notes}
             onChangeText={(text) => handleChange("notes", text)}
           />
         </View>
@@ -401,7 +288,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
           <TextInput
             style={styles.input}
             placeholder="Priority"
-            value={task.priority}
+            value={editedTask.priority}
             onChangeText={(text) => handleChange("priority", text)}
           />
         </View>
@@ -536,37 +423,6 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 8,
   },
-  suggestedGroupingsContainer: {
-    marginTop: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#DCDCDC",
-    paddingBottom: 16,
-  },
-  suggestedGroupingText: {
-    fontSize: 18,
-    padding: 8,
-  },
-  addButton: {
-    marginLeft: 8,
-    padding: 8,
-    backgroundColor: "#DCDCDC",
-    borderRadius: 4,
-  },
-  addButtonText: {
-    fontSize: 16,
-  },
-  assignedMembersContainer: {
-    marginTop: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#DCDCDC",
-    paddingBottom: 16,
-  },
-  assignedMember: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 8,
-  },
 });
 
-export default TaskForm;
+export default UpdateForm;

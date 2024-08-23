@@ -1,8 +1,17 @@
 import React from "react";
-import { View, Text, StyleSheet, FlatList } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+} from "react-native";
 import TaskItem from "../components/TaskItem";
 import { MaterialIcons } from "@expo/vector-icons";
 import { TaskGroupProps } from "../types";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../types";
 
 const TaskGroup: React.FC<TaskGroupProps> = ({
   groupTitle,
@@ -12,6 +21,14 @@ const TaskGroup: React.FC<TaskGroupProps> = ({
   onEdit,
   onShare,
 }) => {
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  const navigateToTaskForm = () => {
+    const today = new Date().toISOString().split("T")[0]; // Get today's date in 'YYYY-MM-DD' format
+    navigation.navigate("TaskForm", { date: today, groupParams: groupTitle });
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: color }]}>
       <View style={styles.header}>
@@ -19,7 +36,9 @@ const TaskGroup: React.FC<TaskGroupProps> = ({
           <Text style={styles.title}>{groupTitle}</Text>
           <Text style={styles.taskCount}>{tasks.length}</Text>
         </View>
-        <MaterialIcons name="add" size={24} style={styles.addIcon} />
+        <TouchableOpacity onPress={navigateToTaskForm}>
+          <MaterialIcons name="add" size={24} style={styles.addIcon} />
+        </TouchableOpacity>
       </View>
       <FlatList
         data={tasks}

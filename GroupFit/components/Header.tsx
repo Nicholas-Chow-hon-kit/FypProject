@@ -1,8 +1,18 @@
 import React from "react";
-import { View, Text, StyleSheet, Image } from "react-native";
-import { MaterialIcons } from "@expo/vector-icons";
+import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 
-const Header = () => {
+interface HeaderProps {
+  onFilterPress: (event: any) => void;
+  filterOptions: any;
+  selectedFilters: any;
+}
+
+const Header = ({
+  onFilterPress,
+  filterOptions,
+  selectedFilters,
+}: HeaderProps) => {
   return (
     <View style={styles.headerContainer}>
       <Image
@@ -10,8 +20,9 @@ const Header = () => {
         style={styles.logo}
       />
       <View style={styles.iconsContainer}>
-        <MaterialIcons name="filter-list" size={24} style={styles.icon} />
-        <MaterialIcons name="more-vert" size={24} style={styles.icon} />
+        <TouchableOpacity onPress={onFilterPress}>
+          <Ionicons name="options" size={24} style={styles.icon} />
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -33,7 +44,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   icon: {
-    marginHorizontal: 10,
+    marginHorizontal: 20,
   },
 });
 

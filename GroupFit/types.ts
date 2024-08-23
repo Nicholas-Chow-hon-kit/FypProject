@@ -4,11 +4,14 @@ export type RootStackParamList = {
   TaskForm: { date: string | null; groupParams?: string };
   Auth: undefined; 
   ProfileSetup: undefined;
+  UpdateForm: { task: Task }; 
 };
 
 // CalendarStackParamList 
+// types.ts
 export type CalendarStackParamList = {
   CalendarScreen: undefined;
+  DayViewCalendar: { date: string; calendarName: string }; 
 };
 
 

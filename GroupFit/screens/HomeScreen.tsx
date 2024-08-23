@@ -6,29 +6,34 @@ import {
   Text,
   SafeAreaView,
   StatusBar,
+  TouchableOpacity,
 } from "react-native";
 import Header from "../components/Header";
 import TaskGroup from "../components/TaskGroup";
 import { Task, TaskGroupData } from "../types";
 import { useTasks } from "../contexts/TaskProvider";
 import Dropdown from "../components/Dropdown"; // Import the custom dropdown component
-
-const onDelete = (id: string) => {
-  // Implement your delete logic here
-};
-
-const onEdit = (task: Task) => {
-  // Implement your edit logic here
-};
-
-const onShare = (task: Task) => {
-  // Implement your share logic here
-};
+import FilterModal from "../components/FilterModal"; // Import the custom filter modal component
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../types";
+import { supabase } from "../lib/supabase";
+import User from "../watermelondb/Model/User";
+import { useAuth } from "../contexts/AuthProvider";
 
 const HomeScreen = () => {
-  const { tasks, groupings } = useTasks();
+  const { user } = useAuth();
+  const { tasks, groupings, deleteTask } = useTasks();
   const [taskGroups, setTaskGroups] = useState<TaskGroupData[]>([]);
   const [selectedPeriod, setSelectedPeriod] = useState("week");
+  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  useEffect(() => {
+    fetchSelectedFilters();
+  }, []);
 
   useEffect(() => {
     if (tasks.length > 0 && groupings.length > 0) {
@@ -107,22 +112,72 @@ const HomeScreen = () => {
         groupedTasks[task.grouping_id].push(transformedTask);
       });
 
-      const taskGroupsData: TaskGroupData[] = groupings.map((grouping) => ({
-        groupTitle: grouping.name,
-        color: grouping.default_color,
-        tasks: groupedTasks[grouping.id] || [],
-      }));
+      const taskGroupsData: TaskGroupData[] = groupings
+        .filter((grouping) => selectedFilters.includes(grouping.id))
+        .map((grouping) => ({
+          groupTitle: grouping.name,
+          color: grouping.default_color,
+          tasks: groupedTasks[grouping.id] || [],
+        }));
 
       setTaskGroups(taskGroupsData);
     }
-  }, [tasks, groupings, selectedPeriod]);
+  }, [tasks, groupings, selectedPeriod, selectedFilters]);
+
+  const fetchSelectedFilters = async () => {
+    const { data, error } = await supabase
+      .from("user_filters")
+      .select("filters")
+      .eq("user_id", user?.id);
+
+    if (error) {
+      console.error("Error fetching selected filters:", error);
+    } else {
+      if (data.length > 0) {
+        setSelectedFilters(data[0].filters);
+      } else {
+        setSelectedFilters(groupings.map((g) => g.id));
+      }
+    }
+  };
+
+  const saveSelectedFilters = async (filters: string[]) => {
+    const { data, error } = await supabase
+      .from("user_filters")
+      .upsert([{ user_id: user?.id, filters }], {
+        onConflict: "user_id",
+      });
+
+    if (error) {
+      console.error("Error saving selected filters:", error);
+    }
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    await deleteTask(taskId);
+    // Update the local state to reflect the deletion
+    setTaskGroups((prevTaskGroups) =>
+      prevTaskGroups.map((group) => ({
+        ...group,
+        tasks: group.tasks.filter((task) => task.id !== taskId),
+      }))
+    );
+  };
+
+  const onEdit = (task: Task) => {
+    navigation.navigate("UpdateForm", { task });
+  };
+
+  const onShare = (task: Task) => {
+    // Implement your share logic here
+  };
 
   const renderItem = ({ item }: { item: TaskGroupData }) => (
     <TaskGroup
       groupTitle={item.groupTitle}
       tasks={item.tasks}
       color={item.color}
-      onDelete={onDelete}
+      onDelete={handleDeleteTask}
       onEdit={onEdit}
       onShare={onShare}
     />
@@ -135,13 +190,33 @@ const HomeScreen = () => {
     { label: "Tasks for the Year", value: "year" },
   ];
 
+  const handleFilterPress = () => {
+    setFilterModalVisible(true);
+  };
+
+  const handleFilterSelect = (value: string) => {
+    const newFilters = selectedFilters.includes(value)
+      ? selectedFilters.filter((filter) => filter !== value)
+      : [...selectedFilters, value];
+
+    setSelectedFilters(newFilters);
+    saveSelectedFilters(newFilters);
+  };
+
   return (
     <SafeAreaView style={styles.safeAreaContainer}>
       <StatusBar barStyle="default" />
       <FlatList
         ListHeaderComponent={
           <View style={styles.headerContainer}>
-            <Header />
+            <Header
+              onFilterPress={handleFilterPress}
+              filterOptions={groupings.map((g) => ({
+                label: g.name,
+                value: g.id,
+              }))}
+              selectedFilters={selectedFilters}
+            />
             <View style={styles.periodSelector}>
               <Dropdown
                 options={periodOptions}
@@ -154,6 +229,13 @@ const HomeScreen = () => {
         data={taskGroups}
         renderItem={renderItem}
         keyExtractor={(item) => item.groupTitle}
+      />
+      <FilterModal
+        visible={filterModalVisible}
+        onClose={() => setFilterModalVisible(false)}
+        options={groupings.map((g) => ({ label: g.name, value: g.id }))}
+        selected={selectedFilters}
+        onSelect={handleFilterSelect}
       />
     </SafeAreaView>
   );

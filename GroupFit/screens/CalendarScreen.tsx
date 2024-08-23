@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Pressable,
@@ -10,10 +10,10 @@ import {
 import GridCalendar from "../components/GridCalendar";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../types";
-import MaterialIcons from "react-native-vector-icons/MaterialIcons";
+import { RootStackParamList, CalendarStackParamList } from "../types";
 import { useTasks } from "../contexts/TaskProvider";
 import { Events, Event } from "../components/GridCalendar";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 
 const CalendarScreen: React.FC = () => {
   const { tasks } = useTasks();
@@ -21,8 +21,13 @@ const CalendarScreen: React.FC = () => {
   const [lastPressedDate, setLastPressedDate] = useState<string | null>(null);
   const [events, setEvents] = useState<Events>({});
 
-  const navigation =
+  const calendarName = "General Calendar";
+
+  const rootNavigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  const calendarNavigation =
+    useNavigation<NativeStackNavigationProp<CalendarStackParamList>>();
 
   useEffect(() => {
     const today = new Date();
@@ -44,13 +49,23 @@ const CalendarScreen: React.FC = () => {
       eventsMap[dateString].events.push({ title: task.title });
     });
 
-    console.log("Transformed Events:", eventsMap); // Log the transformed events
+    // console.log("Transformed Events:", eventsMap); // Log the transformed events
     setEvents(eventsMap);
   }, [tasks]);
 
   const handleDayPress = (dateString: string) => {
     if (selectedDate === dateString && lastPressedDate === dateString) {
-      navigation.navigate("TaskForm", { date: dateString });
+      const hasTasks = tasks.some(
+        (task) => task.start_date_time.split("T")[0] === dateString
+      );
+      if (hasTasks) {
+        calendarNavigation.navigate("DayViewCalendar", {
+          date: dateString,
+          calendarName,
+        });
+      } else {
+        rootNavigation.navigate("TaskForm", { date: dateString });
+      }
     } else {
       setSelectedDate(dateString);
       setLastPressedDate(dateString);
@@ -65,14 +80,13 @@ const CalendarScreen: React.FC = () => {
           <Pressable
             style={styles.addButton}
             onPress={() =>
-              navigation.navigate("TaskForm", { date: selectedDate })
+              rootNavigation.navigate("TaskForm", { date: selectedDate })
             }>
             <Text style={styles.addButtonText}>+</Text>
           </Pressable>
-          <Text style={styles.title}>General Calendar</Text>
+          <Text style={styles.title}>{calendarName}</Text>
           <View style={styles.icons}>
-            <MaterialIcons name="filter-list" size={24} style={styles.icon} />
-            <MaterialIcons name="more-vert" size={24} style={styles.icon} />
+            <Ionicons name="options" size={24} style={styles.icon} />
           </View>
         </View>
         <View style={styles.calendarWrapper}>
@@ -105,7 +119,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   title: {
-    fontSize: 25,
+    fontSize: 24,
     textAlign: "center",
     fontWeight: "bold",
   },
