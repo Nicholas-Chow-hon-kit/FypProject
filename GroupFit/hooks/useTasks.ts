@@ -75,7 +75,10 @@ export const useTasks = () => {
       ...taskData,
       created_by: user.id,
     });
-    setTasks((prevTasks) => [...prevTasks, newTask]);
+    setTasks((prevTasks) => {
+      const updatedTasks = [...prevTasks, newTask];
+      return updatedTasks;
+    });
   };
 
   const handleUpdateTask = async (taskId: string, taskData: TaskData) => {

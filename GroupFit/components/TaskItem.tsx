@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,8 +7,24 @@ import {
   Modal,
   TouchableWithoutFeedback,
 } from "react-native";
-import { MaterialIcons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { TaskItemProps } from "../types";
+import { supabase } from "../lib/supabase";
+
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const year = date.getFullYear();
+  return `${month}/${day}/${year}`;
+};
+
+const formatTime = (timeString: string) => {
+  const [hours, minutes] = timeString.split(":");
+  const period = parseInt(hours) >= 12 ? "PM" : "AM";
+  const formattedHours = parseInt(hours) % 12 || 12;
+  return `${formattedHours}:${minutes} ${period}`;
+};
 
 const TaskItem: React.FC<TaskItemProps> = ({
   task,
@@ -18,6 +34,25 @@ const TaskItem: React.FC<TaskItemProps> = ({
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [creatorName, setCreatorName] = useState("");
+
+  useEffect(() => {
+    const fetchCreatorName = async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", task.createdById)
+        .single();
+
+      if (data) {
+        setCreatorName(data.full_name);
+      }
+    };
+
+    fetchCreatorName();
+  }, [task.createdById]);
+
+  const titleFontSize = expanded ? 16 * 1.5 : 16;
 
   return (
     <View style={styles.container}>
@@ -25,28 +60,84 @@ const TaskItem: React.FC<TaskItemProps> = ({
         onPress={() => setExpanded(!expanded)}
         onLongPress={() => setModalVisible(true)}>
         <View style={[styles.header, expanded && styles.headerExpanded]}>
-          <Text style={styles.title}>{task.title}</Text>
-          <MaterialIcons
-            name={expanded ? "expand-less" : "expand-more"}
-            size={24}
-          />
+          <Text style={[styles.title, { fontSize: titleFontSize }]}>
+            {task.title}
+          </Text>
+          {!expanded && (
+            <MaterialIcons
+              name={expanded ? "expand-less" : "expand-more"}
+              size={24}
+            />
+          )}
         </View>
       </TouchableOpacity>
       {expanded && (
         <View style={[styles.details, expanded && styles.detailsExpanded]}>
-          <Text>Start Date: {task.startDate}</Text>
-          <Text>Start Time: {task.startTime}</Text>
-          <Text>End Date: {task.endDate}</Text>
-          <Text>End Time: {task.endTime}</Text>
-          <Text>Location: {task.location}</Text>
-          <Text>Grouping: {task.grouping}</Text>
-          <Text>Notes: {task.notes}</Text>
-          <Text>Priority: {task.priority}</Text>
-          <Text>Notification Date: {task.notificationDate || "None"}</Text>
-          <Text>Notification Time: {task.notificationTime || "None"}</Text>
-          <Text>Created By ID: {task.createdById}</Text>
-          <Text>Completed By ID: {task.completedById || "None"}</Text>
-          <Text>Assigned To ID: {task.assignedToId}</Text>
+          <View style={styles.labelContainer}>
+            <Ionicons name="time-outline" size={24} color="black" />
+            <Text style={styles.labelText}>Task date & time:</Text>
+          </View>
+          <View style={styles.dateTimeContainer}>
+            <Text style={styles.dateTimeText}>
+              Start Date: {formatDate(task.startDate)}
+            </Text>
+            <Text style={styles.dateTimeText}>
+              Start Time: {formatTime(task.startTime)}
+            </Text>
+            <Text style={styles.dateTimeText}>
+              End Date: {formatDate(task.endDate)}
+            </Text>
+            <Text style={styles.dateTimeText}>
+              End Time: {formatTime(task.endTime)}
+            </Text>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Ionicons name="location" size={24} color="black" />
+            <Text style={styles.inputText}>Location: {task.location}</Text>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Ionicons name="people" size={24} color="black" />
+            <Text style={styles.inputText}>Grouping: {task.grouping}</Text>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Ionicons name="notifications-sharp" size={24} color="black" />
+            <Text style={styles.inputText}>
+              Notification Date:{" "}
+              {task.notificationDate
+                ? formatDate(task.notificationDate)
+                : "None"}
+            </Text>
+            <Text style={styles.inputText}>
+              Notification Time:{" "}
+              {task.notificationTime
+                ? formatTime(task.notificationTime)
+                : "None"}
+            </Text>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Ionicons name="pencil" size={24} color="black" />
+            <Text style={styles.inputText}>Notes: {task.notes}</Text>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Ionicons name="alert-sharp" size={24} color="black" />
+            <Text style={styles.inputText}>Priority: {task.priority}</Text>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Ionicons name="person" size={24} color="black" />
+            <Text style={styles.inputText}>Created By: {creatorName}</Text>
+          </View>
+
+          <TouchableOpacity onPress={() => setExpanded(!expanded)}>
+            <View style={styles.collapseIconContainer}>
+              <MaterialIcons name="expand-less" size={24} />
+            </View>
+          </TouchableOpacity>
         </View>
       )}
       <Modal
@@ -101,14 +192,14 @@ const TaskItem: React.FC<TaskItemProps> = ({
 const styles = StyleSheet.create({
   container: {
     marginVertical: 5,
+    borderRadius: 5,
+    backgroundColor: "#f0f0f0",
+    padding: 10,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#f0f0f0",
-    padding: 10,
-    borderRadius: 5,
   },
   headerExpanded: {
     borderBottomLeftRadius: 0,
@@ -116,15 +207,49 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 16,
+    marginLeft: 8,
   },
   details: {
     borderRadius: 5,
     padding: 10,
-    backgroundColor: "#f0f0f0",
   },
   detailsExpanded: {
     borderTopLeftRadius: 0,
     borderTopRightRadius: 0,
+  },
+  labelContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 4,
+  },
+  labelText: {
+    fontSize: 18,
+    marginLeft: 8,
+  },
+  dateTimeContainer: {
+    marginTop: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#DCDCDC",
+    paddingBottom: 16,
+    marginLeft: 7,
+  },
+  dateTimeText: {
+    fontSize: 16,
+    marginBottom: 4,
+    marginLeft: 7,
+  },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#DCDCDC",
+  },
+  inputText: {
+    flex: 1,
+    padding: 8,
+    marginLeft: 8,
+    fontSize: 16,
   },
   modalContainer: {
     flex: 1,
@@ -154,6 +279,10 @@ const styles = StyleSheet.create({
   cancelButton: {
     borderTopColor: "#ccc",
     borderBottomWidth: 0,
+  },
+  collapseIconContainer: {
+    alignItems: "center",
+    marginTop: 10,
   },
 });
 

@@ -13,7 +13,7 @@ import { TaskProviderProps } from "./TaskProvider.types";
 
 interface TaskContextType {
   tasks: Task[];
-  groupings: { id: string; name: string }[];
+  groupings: { id: string; name: string; default_color: string }[];
   members: { id: string; name: string; role: string }[];
   selectedGrouping: string | null;
   createTask: (taskData: TaskData) => Promise<void>;
@@ -38,9 +38,9 @@ export const useTasks = () => useContext(TaskContext);
 export const TaskProvider = ({ children }: TaskProviderProps) => {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [groupings, setGroupings] = useState<{ id: string; name: string }[]>(
-    []
-  );
+  const [groupings, setGroupings] = useState<
+    { id: string; name: string; default_color: string }[]
+  >([]);
   const [members, setMembers] = useState<
     { id: string; name: string; role: string }[]
   >([]);
@@ -58,7 +58,7 @@ export const TaskProvider = ({ children }: TaskProviderProps) => {
             const groupingIds = userGroups.map((item) => item.grouping_id);
             supabase
               .from("groupings")
-              .select("id, name")
+              .select("id, name, default_color")
               .in("id", groupingIds)
               .then(({ data: groupingData, error }) => {
                 if (groupingData) {
@@ -99,7 +99,6 @@ export const TaskProvider = ({ children }: TaskProviderProps) => {
             };
           }) || [];
 
-        // Ensure combinedData is not undefined before calling setMembers
         setMembers(combinedData);
       };
 
@@ -117,7 +116,14 @@ export const TaskProvider = ({ children }: TaskProviderProps) => {
       ...taskData,
       created_by: user.id,
     });
-    setTasks((prevTasks) => [...prevTasks, newTask as Task]);
+    setTasks((prevTasks) => {
+      const updatedTasks = [...prevTasks, newTask];
+      console.log(
+        "All Task Titles:",
+        updatedTasks.map((task) => task.title)
+      );
+      return updatedTasks;
+    });
   };
 
   const handleUpdateTask = async (taskId: string, taskData: TaskData) => {

@@ -26,5 +26,6 @@ export interface Task {
   notes: string;
   priority: string;
   notification: string;
-  // assigned_to: string[]; // Ensure this is an array of strings
+  created_by: string;
+  completed_by?: string;
 }

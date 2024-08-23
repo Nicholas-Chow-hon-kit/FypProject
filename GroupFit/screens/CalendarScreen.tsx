@@ -12,11 +12,11 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../types";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import { useTasks } from "../hooks/useTasks";
+import { useTasks } from "../contexts/TaskProvider";
 import { Events, Event } from "../components/GridCalendar";
 
 const CalendarScreen: React.FC = () => {
-  const { tasks, createTask } = useTasks();
+  const { tasks } = useTasks();
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [lastPressedDate, setLastPressedDate] = useState<string | null>(null);
   const [events, setEvents] = useState<Events>({});

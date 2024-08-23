@@ -40,20 +40,31 @@ export const createTask = async (taskData: TaskData): Promise<Task> => {
 
 export const getTasks = async (userId: string): Promise<Task[]> => {
   try {
-    const { data, error } = await supabase
-      .from("tasks")
-      .select(`
-        *,
-        task_assignments (
-          user_id
-        )
-      `)
-      .eq("created_by", userId);
+    // Fetch groupings that the user is part of
+    const { data: userGroupings, error: userGroupingsError } = await supabase
+      .from("grouping_members")
+      .select("grouping_id")
+      .eq("user_id", userId);
 
-    if (error) throw error;
+    if (userGroupingsError) throw userGroupingsError;
+
+    if (!userGroupings || userGroupings.length === 0) {
+      return [];
+    }
+
+    // Extract grouping IDs
+    const groupingIds = userGroupings.map((grouping) => grouping.grouping_id);
+
+    // Fetch tasks for those groupings
+    const { data: tasks, error: tasksError } = await supabase
+      .from("tasks")
+      .select("*")
+      .in("grouping_id", groupingIds);
+
+    if (tasksError) throw tasksError;
 
     // Transform the data to match the Task type
-    const tasks: Task[] = data.map((task) => ({
+    const transformedTasks: Task[] = tasks.map((task) => ({
       id: task.id,
       title: task.title,
       start_date_time: task.start_date_time,
@@ -63,10 +74,10 @@ export const getTasks = async (userId: string): Promise<Task[]> => {
       notes: task.notes,
       priority: task.priority,
       notification: task.notification,
-      // assigned_to: task.task_assignments.map((assignment: { user_id: string }) => assignment.user_id),
+      created_by: task.created_by,
     }));
 
-    return tasks;
+    return transformedTasks;
   } catch (error) {
     console.error("Error fetching tasks:", error);
     return [];

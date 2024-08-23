@@ -14,7 +14,7 @@ export type CalendarStackParamList = {
 
 //Task Detail interface
 export interface Task {
-  id: number;
+  id: string;
   title: string;
   startDate: string;      // e.g., "Tue, 18 Jun"
   startTime: string;      // 24-hour clock format, e.g., "08:00"
@@ -28,14 +28,14 @@ export interface Task {
   notificationTime: string | null;  // time for notification, can be null
   createdById: string;     // personal identifier for the person who put up the task
   completedById?: string; // personal identifier for the person who completed the task
-  // assignedToId: string[];   // personal identifier for the person who is assigned the task
+  
 }
 
 
 //Task Item component props
 export interface TaskItemProps {
   task: Task;
-  onDelete: (id: number) => void;
+  onDelete: (id: string) => void;
   onEdit: (task: Task) => void;
   onShare: (task: Task) => void;
 }
@@ -45,7 +45,7 @@ export interface TaskGroupProps {
   groupTitle: string;
   tasks: Task[];
   color: string;
-  onDelete: (id: number) => void;
+  onDelete: (id: string) => void;
   onEdit: (task: Task) => void;
   onShare: (task: Task) => void;
 }

@@ -18,7 +18,7 @@ import TimePickerComponent from "../components/TimePickerComponent";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList, Events, Task } from "../types";
 import { Picker } from "@react-native-picker/picker";
-import { useTasks } from "../hooks/useTasks";
+import { useTasks } from "../contexts/TaskProvider";
 import { TaskData } from "../contexts/TaskProvider.types";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthProvider";
@@ -57,7 +57,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ route, navigation }) => {
   }, [groupings, groupParams]);
 
   const [task, setTask] = useState<Task>({
-    id: generateNumericID(),
+    id: String(generateNumericID()),
     title: "",
     startDate: date || todayString,
     startTime: "09:00",

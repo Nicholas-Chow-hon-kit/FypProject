@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   FlatList,
@@ -11,9 +11,9 @@ import Header from "../components/Header";
 import TaskGroup from "../components/TaskGroup";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Task, TaskGroupData } from "../types";
-import { data } from "../store/dummyData";
+import { useTasks } from "../contexts/TaskProvider";
 
-const onDelete = (id: number) => {
+const onDelete = (id: string) => {
   // Implement your delete logic here
 };
 
@@ -26,6 +26,58 @@ const onShare = (task: Task) => {
 };
 
 const HomeScreen = () => {
+  const { tasks, groupings } = useTasks();
+  const [taskGroups, setTaskGroups] = useState<TaskGroupData[]>([]);
+
+  useEffect(() => {
+    if (tasks.length > 0 && groupings.length > 0) {
+      const groupedTasks: { [key: string]: Task[] } = {};
+      tasks.forEach((task) => {
+        const startDateTime = new Date(task.start_date_time);
+        const endDateTime = new Date(task.end_date_time);
+
+        const transformedTask: Task = {
+          id: task.id,
+          title: task.title,
+          startDate: startDateTime.toDateString(),
+          startTime: startDateTime.toTimeString().split(" ")[0].slice(0, 5),
+          endDate: endDateTime.toDateString(),
+          endTime: endDateTime.toTimeString().split(" ")[0].slice(0, 5),
+          location: task.location,
+          grouping:
+            groupings.find((g) => g.id === task.grouping_id)?.name || "",
+          notes: task.notes,
+          priority: task.priority,
+          notificationDate: task.notification
+            ? new Date(task.notification).toDateString()
+            : null,
+          notificationTime: task.notification
+            ? new Date(task.notification)
+                .toTimeString()
+                .split(" ")[0]
+                .slice(0, 5)
+            : null,
+          createdById: task.created_by,
+          completedById: task.completed_by,
+          // assignedToId: task.assigned_to,
+        };
+
+        if (!groupedTasks[task.grouping_id]) {
+          groupedTasks[task.grouping_id] = [];
+        }
+        groupedTasks[task.grouping_id].push(transformedTask);
+      });
+
+      const taskGroupsData: TaskGroupData[] = groupings.map((grouping) => ({
+        groupTitle: grouping.name,
+        color: grouping.default_color,
+        tasks: groupedTasks[grouping.id] || [],
+      }));
+
+      setTaskGroups(taskGroupsData);
+    }
+  }, [tasks, groupings]);
+
   const renderItem = ({ item }: { item: TaskGroupData }) => (
     <TaskGroup
       groupTitle={item.groupTitle}
@@ -50,9 +102,9 @@ const HomeScreen = () => {
             </View>
           </View>
         }
-        data={data}
+        data={taskGroups}
         renderItem={renderItem}
-        keyExtractor={(item) => item.groupTitle} // Adjust keyExtractor as needed
+        keyExtractor={(item) => item.groupTitle}
       />
     </SafeAreaView>
   );
