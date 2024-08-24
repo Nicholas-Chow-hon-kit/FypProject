@@ -8,6 +8,7 @@ import {
   StatusBar,
   FlatList,
   TouchableOpacity,
+  TextInput,
 } from "react-native";
 import { Calendar } from "react-native-calendars";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -25,6 +26,9 @@ const DayViewCalendar: React.FC<{ routeName?: string }> = ({ routeName }) => {
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [calendarName, setCalendarName] = useState<string>("");
   const [markedDates, setMarkedDates] = useState<{ [key: string]: any }>({});
+  const [searchMode, setSearchMode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Task[]>([]);
 
   const navigation =
     useNavigation<NativeStackNavigationProp<CalendarStackParamList>>();
@@ -33,7 +37,8 @@ const DayViewCalendar: React.FC<{ routeName?: string }> = ({ routeName }) => {
 
   useEffect(() => {
     if (route.params) {
-      setSelectedDate(route.params.date);
+      const date = new Date(route.params.date).toISOString().split("T")[0];
+      setSelectedDate(date);
       setCalendarName(route.params.calendarName);
     }
   }, [route.params]);
@@ -57,6 +62,17 @@ const DayViewCalendar: React.FC<{ routeName?: string }> = ({ routeName }) => {
     setMarkedDates(markedDatesMap);
   }, [tasks]);
 
+  useEffect(() => {
+    if (searchQuery) {
+      const results = tasks.filter((task) =>
+        task.title.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setSearchResults(results);
+    } else {
+      setSearchResults([]);
+    }
+  }, [searchQuery, tasks]);
+
   const handleDayPress = (day: { dateString: string }) => {
     setSelectedDate(day.dateString);
   };
@@ -68,31 +84,56 @@ const DayViewCalendar: React.FC<{ routeName?: string }> = ({ routeName }) => {
     return <TaskCard task={item} color={color} groupingName={groupingName} />;
   };
 
+  const toggleSearchMode = () => {
+    setSearchMode(!searchMode);
+    setSearchQuery("");
+    setSearchResults([]);
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="default" />
       <View style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color="black" />
-          </TouchableOpacity>
-          <Text style={styles.title}>{calendarName}</Text>
-          <View style={styles.icons}>
-            <TouchableOpacity onPress={() => console.log("Search pressed")}>
+        {searchMode ? (
+          <View style={styles.searchHeader}>
+            <TouchableOpacity onPress={toggleSearchMode}>
+              <Ionicons name="arrow-back" size={24} color="black" />
+            </TouchableOpacity>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search tasks"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoFocus
+            />
+          </View>
+        ) : (
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Ionicons name="arrow-back" size={24} color="black" />
+            </TouchableOpacity>
+            <Text style={styles.title}>{calendarName}</Text>
+            <TouchableOpacity onPress={toggleSearchMode}>
               <Ionicons name="search" size={24} color="black" />
             </TouchableOpacity>
           </View>
-        </View>
-        <Calendar
-          onDayPress={handleDayPress}
-          markedDates={{
-            ...markedDates,
-            [selectedDate]: { selected: true, selectedColor: "blue" },
-          }}
-        />
+        )}
+        {!searchMode && (
+          <Calendar
+            onDayPress={handleDayPress}
+            markedDates={{
+              ...markedDates,
+              [selectedDate]: { selected: true, selectedColor: "black" },
+            }}
+            firstDay={1} // Set the first day of the week to Monday
+            theme={{
+              selectedDayBackgroundColor: "black", // Customize the selected date circle color
+            }}
+          />
+        )}
         <View style={styles.separator} />
         <FlatList
-          data={filteredTasks}
+          data={searchMode ? searchResults : filteredTasks}
           renderItem={renderTaskCard}
           keyExtractor={(item) => item.id}
           style={styles.taskList}
@@ -119,6 +160,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 20,
   },
+  searchHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+  },
   title: {
     fontSize: 20,
     fontWeight: "bold",
@@ -126,6 +172,14 @@ const styles = StyleSheet.create({
   icons: {
     flexDirection: "row",
     alignItems: "center",
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: "gray",
+    borderRadius: 5,
   },
   taskList: {
     marginTop: 20,

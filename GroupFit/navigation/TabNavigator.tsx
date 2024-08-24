@@ -60,7 +60,11 @@ const TabNavigator = ({ routeName }: { routeName?: string }) => {
       <Tab.Screen
         name="Communities"
         component={CommunitiesStack}
-        options={{ tabBarLabel: "Communities" }}
+        options={{
+          tabBarLabel: "Communities",
+          headerShown: false,
+        }}
+        initialParams={{ routeName }}
       />
       <Tab.Screen
         name="Settings"

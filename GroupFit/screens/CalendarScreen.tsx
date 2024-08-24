@@ -14,12 +14,18 @@ import { RootStackParamList, CalendarStackParamList } from "../types";
 import { useTasks } from "../contexts/TaskProvider";
 import { Events, Event } from "../components/GridCalendar";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { supabase } from "../lib/supabase";
+import { useAuth } from "../contexts/AuthProvider";
+import FilterModal from "../components/FilterModal"; // Import the custom filter modal component
 
 const CalendarScreen: React.FC = () => {
-  const { tasks } = useTasks();
+  const { user } = useAuth();
+  const { tasks, groupings } = useTasks();
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [lastPressedDate, setLastPressedDate] = useState<string | null>(null);
   const [events, setEvents] = useState<Events>({});
+  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
 
   const calendarName = "General Calendar";
 
@@ -34,12 +40,17 @@ const CalendarScreen: React.FC = () => {
     const todayString = today.toISOString().split("T")[0];
     setSelectedDate(todayString);
     setLastPressedDate(todayString);
+    fetchSelectedFilters();
   }, []);
 
   useEffect(() => {
+    const filteredTasks = tasks.filter((task) =>
+      selectedFilters.includes(task.grouping_id)
+    );
+
     const eventsMap: Events = {};
 
-    tasks.forEach((task) => {
+    filteredTasks.forEach((task) => {
       const dateString = task.start_date_time.split("T")[0]; // Ensure date is in 'YYYY-MM-DD' format
       if (!eventsMap[dateString]) {
         eventsMap[dateString] = {
@@ -49,9 +60,50 @@ const CalendarScreen: React.FC = () => {
       eventsMap[dateString].events.push({ title: task.title });
     });
 
-    // console.log("Transformed Events:", eventsMap); // Log the transformed events
     setEvents(eventsMap);
-  }, [tasks]);
+  }, [tasks, selectedFilters]);
+
+  const fetchSelectedFilters = async () => {
+    const { data, error } = await supabase
+      .from("user_filters")
+      .select("filters")
+      .eq("user_id", user?.id);
+
+    if (error) {
+      console.error("Error fetching selected filters:", error);
+    } else {
+      if (data.length > 0) {
+        setSelectedFilters(data[0].filters);
+      } else {
+        setSelectedFilters(groupings.map((g) => g.id));
+      }
+    }
+  };
+
+  const saveSelectedFilters = async (filters: string[]) => {
+    const { data, error } = await supabase
+      .from("user_filters")
+      .upsert([{ user_id: user?.id, filters }], {
+        onConflict: "user_id",
+      });
+
+    if (error) {
+      console.error("Error saving selected filters:", error);
+    }
+  };
+
+  const handleFilterPress = () => {
+    setFilterModalVisible(true);
+  };
+
+  const handleFilterSelect = (value: string) => {
+    const newFilters = selectedFilters.includes(value)
+      ? selectedFilters.filter((filter) => filter !== value)
+      : [...selectedFilters, value];
+
+    setSelectedFilters(newFilters);
+    saveSelectedFilters(newFilters);
+  };
 
   const handleDayPress = (dateString: string) => {
     if (selectedDate === dateString && lastPressedDate === dateString) {
@@ -86,7 +138,9 @@ const CalendarScreen: React.FC = () => {
           </Pressable>
           <Text style={styles.title}>{calendarName}</Text>
           <View style={styles.icons}>
-            <Ionicons name="options" size={24} style={styles.icon} />
+            <Pressable onPress={handleFilterPress}>
+              <Ionicons name="options" size={24} style={styles.icon} />
+            </Pressable>
           </View>
         </View>
         <View style={styles.calendarWrapper}>
@@ -97,6 +151,13 @@ const CalendarScreen: React.FC = () => {
           />
         </View>
       </View>
+      <FilterModal
+        visible={filterModalVisible}
+        onClose={() => setFilterModalVisible(false)}
+        options={groupings.map((g) => ({ label: g.name, value: g.id }))}
+        selected={selectedFilters}
+        onSelect={handleFilterSelect}
+      />
     </SafeAreaView>
   );
 };

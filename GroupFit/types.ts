@@ -14,6 +14,13 @@ export type CalendarStackParamList = {
   DayViewCalendar: { date: string; calendarName: string }; 
 };
 
+export type CommunitiesStackParamList = {
+  CommunitiesScreen: undefined;
+  FriendRequests: undefined;
+  FriendSelection: undefined;
+  AddFriends: undefined;
+};
+
 
 //Task Detail interface
 export interface Task {
