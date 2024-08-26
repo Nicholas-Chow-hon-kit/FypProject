@@ -16,7 +16,9 @@ import { Ionicons } from "@expo/vector-icons";
 type AddFriendsScreenProps = NativeStackScreenProps<
   CommunitiesStackParamList,
   "AddFriends"
->;
+> & {
+  routeName: string;
+};
 
 type UserProfile = {
   id: string;
@@ -24,7 +26,7 @@ type UserProfile = {
   isInvited?: boolean;
 };
 
-const AddFriendsScreen = ({ navigation }: AddFriendsScreenProps) => {
+const AddFriendsScreen = ({ navigation, routeName }: AddFriendsScreenProps) => {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<UserProfile[]>([]);
@@ -124,6 +126,7 @@ const AddFriendsScreen = ({ navigation }: AddFriendsScreenProps) => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="black" />
         </TouchableOpacity>
+        <Text style={styles.headerTitle}>{routeName}</Text>
         <TextInput
           style={styles.searchInput}
           placeholder="Search users by username"
@@ -152,6 +155,11 @@ const styles = StyleSheet.create({
     padding: 10,
     borderBottomWidth: 1,
     borderBottomColor: "#ccc",
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginRight: 10,
   },
   searchInput: {
     flex: 1,

@@ -78,7 +78,9 @@ const CommunitiesScreen = () => {
   const renderGroupCard = ({ item }: { item: GroupItem }) => (
     <TouchableOpacity
       style={styles.groupCard}
-      onPress={() => navigation.navigate("GroupDetails", { groupId: item.id })}>
+      onPress={() =>
+        navigation.navigate("GroupCalendarScreen", { groupId: item.id })
+      }>
       <View
         style={[
           styles.groupProfileCircle,

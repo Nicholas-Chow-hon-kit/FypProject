@@ -4,6 +4,7 @@ import CommunitiesScreen from "../screens/CommunitiesScreen";
 import FriendRequestsScreen from "../screens/FriendRequestsScreen";
 import FriendSelectionScreen from "../screens/FriendSelectionScreen";
 import AddFriendsScreen from "../screens/AddFriendsScreen";
+import GroupCalendarScreen from "../screens/GroupCalendarScreen"; // Import the new screen
 import { CommunitiesStackParamList } from "../types";
 
 const Stack = createNativeStackNavigator<CommunitiesStackParamList>();
@@ -12,9 +13,24 @@ const CommunitiesStack = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="CommunitiesScreen" component={CommunitiesScreen} />
-      <Stack.Screen name="FriendRequests" component={FriendRequestsScreen} />
-      <Stack.Screen name="FriendSelection" component={FriendSelectionScreen} />
-      <Stack.Screen name="AddFriends" component={AddFriendsScreen} />
+      <Stack.Screen name="FriendRequests">
+        {(props) => (
+          <FriendRequestsScreen {...props} routeName="FriendRequests" />
+        )}
+      </Stack.Screen>
+      <Stack.Screen name="FriendSelection">
+        {(props) => (
+          <FriendSelectionScreen {...props} routeName="FriendSelection" />
+        )}
+      </Stack.Screen>
+      <Stack.Screen name="AddFriends">
+        {(props) => <AddFriendsScreen {...props} routeName="AddFriends" />}
+      </Stack.Screen>
+      <Stack.Screen name="GroupCalendarScreen">
+        {(props) => (
+          <GroupCalendarScreen {...props} routeName="GroupCalendarScreen" />
+        )}
+      </Stack.Screen>
     </Stack.Navigator>
   );
 };

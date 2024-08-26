@@ -15,7 +15,9 @@ import { Ionicons } from "@expo/vector-icons";
 type FriendRequestsScreenProps = NativeStackScreenProps<
   CommunitiesStackParamList,
   "FriendRequests"
->;
+> & {
+  routeName: string;
+};
 
 interface FriendRequest {
   user_id: string;
@@ -25,7 +27,10 @@ interface FriendRequest {
   username?: string;
 }
 
-const FriendRequestsScreen = ({ navigation }: FriendRequestsScreenProps) => {
+const FriendRequestsScreen = ({
+  navigation,
+  routeName,
+}: FriendRequestsScreenProps) => {
   const { user } = useAuth();
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
   const [requestType, setRequestType] = useState<"received" | "sent">(
@@ -161,7 +166,7 @@ const FriendRequestsScreen = ({ navigation }: FriendRequestsScreenProps) => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="black" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Friend Requests</Text>
+        <Text style={styles.headerTitle}>{routeName}</Text>
       </View>
       <View style={styles.toggleContainer}>
         <TouchableOpacity

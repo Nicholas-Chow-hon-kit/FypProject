@@ -19,9 +19,14 @@ import { useTasks } from "../contexts/TaskProvider";
 type FriendSelectionScreenProps = NativeStackScreenProps<
   CommunitiesStackParamList,
   "FriendSelection"
->;
+> & {
+  routeName: string;
+};
 
-const FriendSelectionScreen = ({ navigation }: FriendSelectionScreenProps) => {
+const FriendSelectionScreen = ({
+  navigation,
+  routeName,
+}: FriendSelectionScreenProps) => {
   const { user } = useAuth();
   const { fetchGroupings } = useTasks(); // Get the fetchGroupings function from the useTasks hook
   const [friends, setFriends] = useState<{ id: any; username: any }[]>([]);
@@ -140,7 +145,7 @@ const FriendSelectionScreen = ({ navigation }: FriendSelectionScreenProps) => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="black" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Create Group</Text>
+        <Text style={styles.headerTitle}>{routeName}</Text>
       </View>
       <TextInput
         style={styles.groupNameInput}

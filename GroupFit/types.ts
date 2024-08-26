@@ -19,6 +19,7 @@ export type CommunitiesStackParamList = {
   FriendRequests: undefined;
   FriendSelection: undefined;
   AddFriends: undefined;
+  GroupCalendarScreen: { groupId: string }; // Add this line
 };
 
 

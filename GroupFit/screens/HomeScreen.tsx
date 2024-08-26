@@ -18,8 +18,8 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../types";
 import { supabase } from "../lib/supabase";
-import User from "../watermelondb/Model/User";
 import { useAuth } from "../contexts/AuthProvider";
+import { saveSelectedPeriod, getSelectedPeriod } from "../utils/asyncStorage"; // Import the AsyncStorage functions
 
 const HomeScreen = () => {
   const { user } = useAuth();
@@ -33,6 +33,7 @@ const HomeScreen = () => {
 
   useEffect(() => {
     fetchSelectedFilters();
+    loadSettings();
   }, []);
 
   useEffect(() => {
@@ -202,6 +203,17 @@ const HomeScreen = () => {
     setSelectedFilters(newFilters);
     saveSelectedFilters(newFilters);
   };
+
+  const loadSettings = async () => {
+    const period = await getSelectedPeriod();
+    if (period) {
+      setSelectedPeriod(period);
+    }
+  };
+
+  useEffect(() => {
+    saveSelectedPeriod(selectedPeriod);
+  }, [selectedPeriod]);
 
   return (
     <SafeAreaView style={styles.safeAreaContainer}>

@@ -15,7 +15,11 @@ const TabNavigator = ({ routeName }: { routeName?: string }) => {
   const hideTabBar =
     routeName === "DayViewCalendar" ||
     routeName === "TaskForm" ||
-    routeName === "UpdateForm";
+    routeName === "UpdateForm" ||
+    routeName === "FriendRequests" ||
+    routeName === "FriendSelection" ||
+    routeName === "AddFriends" ||
+    routeName === "GroupCalendarScreen";
 
   return (
     <Tab.Navigator
