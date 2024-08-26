@@ -12,6 +12,9 @@ import { useAuth } from "../contexts/AuthProvider";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { CommunitiesStackParamList } from "../types";
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import ColorPickerModal from "../components/ColorPickerModal"; // Import the color picker modal
+import { useTasks } from "../contexts/TaskProvider";
 
 type FriendSelectionScreenProps = NativeStackScreenProps<
   CommunitiesStackParamList,
@@ -20,11 +23,14 @@ type FriendSelectionScreenProps = NativeStackScreenProps<
 
 const FriendSelectionScreen = ({ navigation }: FriendSelectionScreenProps) => {
   const { user } = useAuth();
+  const { fetchGroupings } = useTasks(); // Get the fetchGroupings function from the useTasks hook
   const [friends, setFriends] = useState<{ id: any; username: any }[]>([]);
   const [selectedFriends, setSelectedFriends] = useState<(string | number)[]>(
     []
   );
   const [groupName, setGroupName] = useState("");
+  const [groupColor, setGroupColor] = useState("#54c5c9"); // State for the group color
+  const [showColorModal, setShowColorModal] = useState(false); // State to control the color picker modal visibility
 
   useEffect(() => {
     fetchFriends();
@@ -33,14 +39,16 @@ const FriendSelectionScreen = ({ navigation }: FriendSelectionScreenProps) => {
   const fetchFriends = async () => {
     const { data, error } = await supabase
       .from("friendships")
-      .select("friend_id")
-      .eq("user_id", user?.id)
+      .select("friend_id, user_id, status")
+      .or(`user_id.eq.${user?.id},friend_id.eq.${user?.id}`)
       .eq("status", "accepted");
 
     if (error) {
       console.error("Error fetching friends:", error);
     } else {
-      const friendIds = data.map((item) => item.friend_id);
+      const friendIds = data.map((item) =>
+        item.user_id === user?.id ? item.friend_id : item.user_id
+      );
       const { data: friendData, error: friendError } = await supabase
         .from("profiles")
         .select("id, username")
@@ -63,19 +71,48 @@ const FriendSelectionScreen = ({ navigation }: FriendSelectionScreenProps) => {
   };
 
   const handleCreateGroup = async () => {
-    const { data, error } = await supabase.from("groupings").insert([
-      {
-        name: groupName,
-        created_by: user?.id,
-        members: selectedFriends,
-      },
-    ]);
+    // Include the user's ID in the members array
+    const membersWithUser = [...selectedFriends, user?.id];
 
-    if (error) {
-      console.error("Error creating group:", error);
-    } else {
-      navigation.navigate("CommunitiesScreen");
+    // Insert the new grouping
+    const { data: groupingData, error: groupingError } = await supabase
+      .from("groupings")
+      .insert([
+        {
+          name: groupName,
+          created_by: user?.id,
+          default_color: groupColor,
+        },
+      ])
+      .select("id"); // Select the ID of the newly created grouping
+
+    if (groupingError) {
+      console.error("Error creating group:", groupingError);
+      return;
     }
+
+    const groupingId = groupingData[0].id;
+
+    // Insert the members into the grouping_members table
+    const memberInsertData = membersWithUser.map((memberId) => ({
+      grouping_id: groupingId,
+      user_id: memberId,
+      role: "member", // You can set the role as needed
+    }));
+
+    const { error: membersError } = await supabase
+      .from("grouping_members")
+      .insert(memberInsertData);
+
+    if (membersError) {
+      console.error("Error adding members to group:", membersError);
+      return;
+    }
+
+    // Refetch the groupings
+    await fetchGroupings();
+
+    navigation.navigate("CommunitiesScreen");
   };
 
   interface FriendItem {
@@ -99,11 +136,30 @@ const FriendSelectionScreen = ({ navigation }: FriendSelectionScreenProps) => {
 
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color="black" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Create Group</Text>
+      </View>
       <TextInput
         style={styles.groupNameInput}
         placeholder="Group name"
         value={groupName}
         onChangeText={setGroupName}
+      />
+      <View style={styles.colorPickerContainer}>
+        <Text style={styles.colorPickerLabel}>Group Color:</Text>
+        <TouchableOpacity
+          style={[styles.colorCircle, { backgroundColor: groupColor }]}
+          onPress={() => setShowColorModal(true)}
+        />
+      </View>
+      <ColorPickerModal
+        visible={showColorModal}
+        onClose={() => setShowColorModal(false)}
+        onSelectColor={(color) => setGroupColor(color.hex)}
+        currentColor={groupColor}
       />
       <FlatList
         data={friends}
@@ -126,6 +182,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     padding: 10,
   },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginLeft: 10,
+  },
   groupNameInput: {
     height: 40,
     borderWidth: 1,
@@ -133,6 +199,22 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     paddingHorizontal: 10,
     marginBottom: 10,
+  },
+  colorPickerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  colorPickerLabel: {
+    fontSize: 16,
+    marginRight: 10,
+  },
+  colorCircle: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: "#ccc",
   },
   friendList: {
     flex: 1,

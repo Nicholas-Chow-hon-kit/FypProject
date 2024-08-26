@@ -19,50 +19,32 @@ import { CommunitiesStackParamList } from "../types";
 interface GroupItem {
   id: string;
   name: string;
+  default_color: string;
 }
 
 const CommunitiesScreen = () => {
   const { user } = useAuth();
-  const { groupings } = useTasks();
+  const { filteredGroupings, friendRequestsCount, fetchFriendRequestsCount } =
+    useTasks();
   const [searchQuery, setSearchQuery] = useState("");
   const [groups, setGroups] = useState<GroupItem[]>([]);
-  const [friendRequestsCount, setFriendRequestsCount] = useState(0);
 
   const navigation =
     useNavigation<NativeStackNavigationProp<CommunitiesStackParamList>>();
 
   useEffect(() => {
-    // Fetch friend requests count
-    fetchFriendRequestsCount();
     // Set initial groups
     setInitialGroups();
-  }, []);
-
-  const fetchFriendRequestsCount = async () => {
-    const { data, error } = await supabase
-      .from("friendships")
-      .select("id")
-      .eq("friend_id", user?.id)
-      .eq("status", "pending");
-
-    if (error) {
-      console.error("Error fetching friend requests count:", error);
-    } else {
-      setFriendRequestsCount(data.length);
-    }
-  };
+  }, [filteredGroupings]);
 
   const setInitialGroups = () => {
-    const filteredGroupings = groupings.filter(
-      (group) => group.name !== "Personal"
-    );
     setGroups(filteredGroupings);
   };
 
   const fetchGroups = async () => {
     const { data, error } = await supabase
       .from("groupings")
-      .select("id, name")
+      .select("id, name, default_color")
       .neq("name", "Personal")
       .eq("created_by", user?.id);
 
@@ -78,7 +60,7 @@ const CommunitiesScreen = () => {
     if (query) {
       const { data, error } = await supabase
         .from("groupings")
-        .select("id, name")
+        .select("id, name, default_color")
         .ilike("name", `%${query}%`)
         .neq("name", "Personal")
         .eq("created_by", user?.id);
@@ -94,9 +76,18 @@ const CommunitiesScreen = () => {
   };
 
   const renderGroupCard = ({ item }: { item: GroupItem }) => (
-    <View style={styles.groupCard}>
+    <TouchableOpacity
+      style={styles.groupCard}
+      onPress={() => navigation.navigate("GroupDetails", { groupId: item.id })}>
+      <View
+        style={[
+          styles.groupProfileCircle,
+          { backgroundColor: item.default_color },
+        ]}>
+        <Text style={styles.groupProfileText}>{item.name[0]}</Text>
+      </View>
       <Text style={styles.groupNameText}>{item.name}</Text>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -177,9 +168,24 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   groupCard: {
+    flexDirection: "row",
+    alignItems: "center",
     padding: 10,
     borderBottomWidth: 1,
     borderBottomColor: "#ccc",
+  },
+  groupProfileCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
+  },
+  groupProfileText: {
+    color: "white",
+    fontSize: 20,
+    fontWeight: "bold",
   },
   groupNameText: {
     fontSize: 16,

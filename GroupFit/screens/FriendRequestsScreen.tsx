@@ -17,6 +17,14 @@ type FriendRequestsScreenProps = NativeStackScreenProps<
   "FriendRequests"
 >;
 
+interface FriendRequest {
+  user_id: string;
+  id: number;
+  friend_id: string;
+  created_by: string;
+  username?: string;
+}
+
 const FriendRequestsScreen = ({ navigation }: FriendRequestsScreenProps) => {
   const { user } = useAuth();
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
@@ -44,6 +52,7 @@ const FriendRequestsScreen = ({ navigation }: FriendRequestsScreenProps) => {
     if (error) {
       console.error("Error fetching friend requests:", error);
     } else {
+      console.log("Friend requests fetched:", data);
       if (requestType === "received") {
         await fetchSenderProfiles(data);
       } else {
@@ -113,14 +122,6 @@ const FriendRequestsScreen = ({ navigation }: FriendRequestsScreenProps) => {
       fetchFriendRequests();
     }
   };
-
-  interface FriendRequest {
-    user_id: string;
-    id: number;
-    friend_id: string;
-    created_by: string;
-    username?: string;
-  }
 
   const renderFriendRequest = ({ item }: { item: FriendRequest }) => (
     <View style={styles.requestCard}>

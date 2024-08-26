@@ -14,23 +14,31 @@ import { TaskProviderProps } from "./TaskProvider.types";
 interface TaskContextType {
   tasks: Task[];
   groupings: { id: string; name: string; default_color: string }[];
+  filteredGroupings: { id: string; name: string; default_color: string }[];
   members: { id: string; name: string; role: string }[];
   selectedGrouping: string | null;
+  friendRequestsCount: number;
   createTask: (taskData: TaskData) => Promise<void>;
   updateTask: (taskId: string, taskData: TaskData) => Promise<void>;
   deleteTask: (taskId: string) => Promise<void>;
   setSelectedGrouping: (groupingId: string | null) => void;
+  fetchFriendRequestsCount: () => void;
+  fetchGroupings: () => void; // Add fetchGroupings to the context type
 }
 
 const TaskContext = createContext<TaskContextType>({
   tasks: [],
   groupings: [],
+  filteredGroupings: [],
   members: [],
   selectedGrouping: null,
+  friendRequestsCount: 0,
   createTask: async () => {},
   updateTask: async () => {},
   deleteTask: async () => {},
   setSelectedGrouping: () => {},
+  fetchFriendRequestsCount: () => {},
+  fetchGroupings: () => {}, // Add fetchGroupings to the default context value
 });
 
 export const useTasks = () => useContext(TaskContext);
@@ -41,42 +49,52 @@ export const TaskProvider = ({ children }: TaskProviderProps) => {
   const [groupings, setGroupings] = useState<
     { id: string; name: string; default_color: string }[]
   >([]);
+  const [filteredGroupings, setFilteredGroupings] = useState<
+    { id: string; name: string; default_color: string }[]
+  >([]);
   const [members, setMembers] = useState<
     { id: string; name: string; role: string }[]
   >([]);
   const [selectedGrouping, setSelectedGrouping] = useState<string | null>(null);
+  const [friendRequestsCount, setFriendRequestsCount] = useState(0);
 
   useEffect(() => {
     if (user) {
-      // Fetch groupings that the user is part of
-      supabase
-        .from("grouping_members")
-        .select("grouping_id")
-        .eq("user_id", user.id)
-        .then(({ data: userGroups, error }) => {
-          if (userGroups) {
-            const groupingIds = userGroups.map((item) => item.grouping_id);
-            supabase
-              .from("groupings")
-              .select("id, name, default_color")
-              .in("id", groupingIds)
-              .then(({ data: groupingData, error }) => {
-                if (groupingData) {
-                  setGroupings(groupingData);
-                }
-              });
-          }
-        });
-
+      fetchGroupings();
       getTasks(user.id).then((data) => {
         setTasks(data);
       });
+      fetchFriendRequestsCount();
     }
   }, [user]);
 
+  const fetchGroupings = async () => {
+    if (user) {
+      const { data: userGroups, error } = await supabase
+        .from("grouping_members")
+        .select("grouping_id")
+        .eq("user_id", user.id);
+
+      if (userGroups) {
+        const groupingIds = userGroups.map((item) => item.grouping_id);
+        const { data: groupingData, error } = await supabase
+          .from("groupings")
+          .select("id, name, default_color")
+          .in("id", groupingIds);
+
+        if (groupingData) {
+          setGroupings(groupingData);
+          const filteredGroupings = groupingData.filter(
+            (grouping) => grouping.name !== "Personal"
+          );
+          setFilteredGroupings(filteredGroupings);
+        }
+      }
+    }
+  };
+
   useEffect(() => {
     if (selectedGrouping) {
-      // Fetch members based on the selected grouping
       const fetchMembers = async () => {
         const memberData = await supabase
           .from("grouping_members")
@@ -107,6 +125,22 @@ export const TaskProvider = ({ children }: TaskProviderProps) => {
       setMembers([]);
     }
   }, [selectedGrouping]);
+
+  const fetchFriendRequestsCount = async () => {
+    if (user) {
+      const { data, error } = await supabase
+        .from("friendships")
+        .select("id")
+        .eq("friend_id", user.id)
+        .eq("status", "pending");
+
+      if (error) {
+        console.error("Error fetching friend requests count:", error);
+      } else {
+        setFriendRequestsCount(data.length);
+      }
+    }
+  };
 
   const handleCreateTask = async (taskData: TaskData) => {
     if (!user) {
@@ -150,14 +184,25 @@ export const TaskProvider = ({ children }: TaskProviderProps) => {
     () => ({
       tasks,
       groupings,
+      filteredGroupings,
       members,
       selectedGrouping,
+      friendRequestsCount,
       createTask: handleCreateTask,
       updateTask: handleUpdateTask,
       deleteTask: handleDeleteTask,
       setSelectedGrouping,
+      fetchFriendRequestsCount,
+      fetchGroupings, // Add fetchGroupings to the context value
     }),
-    [tasks, groupings, members, selectedGrouping]
+    [
+      tasks,
+      groupings,
+      filteredGroupings,
+      members,
+      selectedGrouping,
+      friendRequestsCount,
+    ]
   );
 
   return <TaskContext.Provider value={value}>{children}</TaskContext.Provider>;
