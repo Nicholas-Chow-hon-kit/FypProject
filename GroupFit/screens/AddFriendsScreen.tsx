@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -21,7 +21,7 @@ type AddFriendsScreenProps = NativeStackScreenProps<
 type UserProfile = {
   id: string;
   username: string;
-  email: string;
+  isInvited?: boolean;
 };
 
 const AddFriendsScreen = ({ navigation }: AddFriendsScreenProps) => {
@@ -29,13 +29,19 @@ const AddFriendsScreen = ({ navigation }: AddFriendsScreenProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<UserProfile[]>([]);
 
+  useEffect(() => {
+    if (searchResults.length > 0) {
+      checkFriendRequests();
+    }
+  }, [searchResults]);
+
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
     if (query) {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, username, email")
-        .or(`username.ilike.%${query}%,email.ilike.%${query}%`)
+        .select("id, username")
+        .ilike("username", `%${query}%`)
         .neq("id", user?.id);
 
       if (error) {
@@ -48,29 +54,67 @@ const AddFriendsScreen = ({ navigation }: AddFriendsScreenProps) => {
     }
   };
 
-  const handleSendRequest = async (friendId: string) => {
+  const checkFriendRequests = async () => {
+    const friendIds = searchResults.map((user) => user.id);
     const { data, error } = await supabase
       .from("friendships")
-      .insert([{ user_id: user?.id, friend_id: friendId, status: "pending" }]);
+      .select("friend_id")
+      .in("friend_id", friendIds)
+      .eq("user_id", user?.id)
+      .eq("status", "pending");
+
+    if (error) {
+      console.error("Error checking friend requests:", error);
+    } else {
+      const invitedFriends = data.map((item) => item.friend_id);
+      setSearchResults((prevResults) =>
+        prevResults.map((user) => ({
+          ...user,
+          isInvited: invitedFriends.includes(user.id),
+        }))
+      );
+    }
+  };
+
+  const handleSendRequest = async (friendId: string) => {
+    const { data, error } = await supabase.from("friendships").insert([
+      {
+        user_id: user?.id,
+        friend_id: friendId,
+        status: "pending",
+        created_by: user?.id,
+        updated_by: user?.id,
+      },
+    ]);
 
     if (error) {
       console.error("Error sending friend request:", error);
     } else {
-      // Handle success
+      // Update the UI to show "Invited"
+      setSearchResults((prevResults) =>
+        prevResults.map((user) =>
+          user.id === friendId ? { ...user, isInvited: true } : user
+        )
+      );
     }
   };
 
   const renderUserCard = ({ item }: { item: UserProfile }) => (
     <View style={styles.userCard}>
-      <View style={styles.userInfo}>
+      <View style={styles.profileCard}>
+        <View style={styles.profilePicture}>
+          <Ionicons name="person-circle-outline" size={48} color="black" />
+        </View>
         <Text style={styles.usernameText}>{item.username}</Text>
-        <Text style={styles.emailText}>{item.email}</Text>
+        <TouchableOpacity
+          style={[styles.inviteButton, item.isInvited && styles.invitedButton]}
+          onPress={() => handleSendRequest(item.id)}
+          disabled={item.isInvited}>
+          <Text style={styles.buttonText}>
+            {item.isInvited ? "Invited" : "Invite"}
+          </Text>
+        </TouchableOpacity>
       </View>
-      <TouchableOpacity
-        style={styles.inviteButton}
-        onPress={() => handleSendRequest(item.id)}>
-        <Text style={styles.buttonText}>Invite</Text>
-      </TouchableOpacity>
     </View>
   );
 
@@ -82,7 +126,7 @@ const AddFriendsScreen = ({ navigation }: AddFriendsScreenProps) => {
         </TouchableOpacity>
         <TextInput
           style={styles.searchInput}
-          placeholder="Search users by username or email"
+          placeholder="Search users by username"
           value={searchQuery}
           onChangeText={handleSearch}
         />
@@ -122,28 +166,36 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   userCard: {
-    flexDirection: "row",
-    alignItems: "center",
     padding: 10,
     borderBottomWidth: 1,
     borderBottomColor: "#ccc",
   },
-  userInfo: {
-    flex: 1,
+  profileCard: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  profilePicture: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "#e0e0e0",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
   },
   usernameText: {
+    flex: 1,
     fontSize: 16,
     fontWeight: "bold",
-  },
-  emailText: {
-    fontSize: 14,
-    color: "#666",
   },
   inviteButton: {
     backgroundColor: "#007bff",
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 5,
+  },
+  invitedButton: {
+    backgroundColor: "#b3d9ff",
   },
   buttonText: {
     color: "white",

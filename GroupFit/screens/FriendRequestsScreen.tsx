@@ -17,32 +17,74 @@ type FriendRequestsScreenProps = NativeStackScreenProps<
   "FriendRequests"
 >;
 
-type FriendRequest = {
-  id: any;
-  user_id: any;
-  friend_id: any;
-  status: any;
-};
-
 const FriendRequestsScreen = ({ navigation }: FriendRequestsScreenProps) => {
   const { user } = useAuth();
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
+  const [requestType, setRequestType] = useState<"received" | "sent">(
+    "received"
+  );
 
   useEffect(() => {
     fetchFriendRequests();
-  }, []);
+  }, [requestType]);
 
   const fetchFriendRequests = async () => {
-    const { data, error } = await supabase
+    let query = supabase
       .from("friendships")
-      .select("id, user_id, friend_id, status")
-      .eq("friend_id", user?.id)
-      .eq("status", "pending");
+      .select("id, user_id, friend_id, status, created_by");
+
+    if (requestType === "received") {
+      query = query.eq("friend_id", user?.id).eq("status", "pending");
+    } else {
+      query = query.eq("user_id", user?.id).eq("status", "pending");
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error("Error fetching friend requests:", error);
     } else {
-      setFriendRequests(data);
+      if (requestType === "received") {
+        await fetchSenderProfiles(data);
+      } else {
+        await fetchFriendProfiles(data);
+      }
+    }
+  };
+
+  const fetchSenderProfiles = async (requests: FriendRequest[]) => {
+    const senderIds = requests.map((request) => request.created_by);
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, username")
+      .in("id", senderIds);
+
+    if (error) {
+      console.error("Error fetching sender profiles:", error);
+    } else {
+      const updatedRequests = requests.map((request) => {
+        const profile = data.find((p) => p.id === request.created_by);
+        return { ...request, username: profile?.username };
+      });
+      setFriendRequests(updatedRequests);
+    }
+  };
+
+  const fetchFriendProfiles = async (requests: FriendRequest[]) => {
+    const friendIds = requests.map((request) => request.friend_id);
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, username")
+      .in("id", friendIds);
+
+    if (error) {
+      console.error("Error fetching friend profiles:", error);
+    } else {
+      const updatedRequests = requests.map((request) => {
+        const profile = data.find((p) => p.id === request.friend_id);
+        return { ...request, username: profile?.username };
+      });
+      setFriendRequests(updatedRequests);
     }
   };
 
@@ -75,25 +117,40 @@ const FriendRequestsScreen = ({ navigation }: FriendRequestsScreenProps) => {
   interface FriendRequest {
     user_id: string;
     id: number;
+    friend_id: string;
+    created_by: string;
+    username?: string;
   }
 
   const renderFriendRequest = ({ item }: { item: FriendRequest }) => (
     <View style={styles.requestCard}>
-      <Text style={styles.requestText}>
-        Friend request from user {item.user_id}
-      </Text>
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.acceptButton}
-          onPress={() => handleAcceptRequest(item.id)}>
-          <Text style={styles.buttonText}>Accept</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.declineButton}
-          onPress={() => handleDeclineRequest(item.id)}>
-          <Text style={styles.buttonText}>Decline</Text>
-        </TouchableOpacity>
+      <View style={styles.profileCard}>
+        <View style={styles.profilePicture}>
+          <Ionicons name="person-circle-outline" size={48} color="black" />
+        </View>
+        <Text style={styles.usernameText}>{item.username}</Text>
+        {requestType === "sent" && (
+          <TouchableOpacity
+            style={[styles.inviteButton, styles.invitedButton]}
+            disabled={true}>
+            <Text style={styles.buttonText}>Invited</Text>
+          </TouchableOpacity>
+        )}
       </View>
+      {requestType === "received" && (
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={styles.acceptButton}
+            onPress={() => handleAcceptRequest(item.id)}>
+            <Text style={styles.buttonText}>Accept</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.declineButton}
+            onPress={() => handleDeclineRequest(item.id)}>
+            <Text style={styles.buttonText}>Decline</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 
@@ -104,6 +161,36 @@ const FriendRequestsScreen = ({ navigation }: FriendRequestsScreenProps) => {
           <Ionicons name="arrow-back" size={24} color="black" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Friend Requests</Text>
+      </View>
+      <View style={styles.toggleContainer}>
+        <TouchableOpacity
+          style={[
+            styles.toggleButton,
+            requestType === "received" && styles.activeToggleButton,
+          ]}
+          onPress={() => setRequestType("received")}>
+          <Text
+            style={[
+              styles.toggleButtonText,
+              requestType === "received" && styles.activeToggleButtonText,
+            ]}>
+            Received
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.toggleButton,
+            requestType === "sent" && styles.activeToggleButton,
+          ]}
+          onPress={() => setRequestType("sent")}>
+          <Text
+            style={[
+              styles.toggleButtonText,
+              requestType === "sent" && styles.activeToggleButtonText,
+            ]}>
+            Sent
+          </Text>
+        </TouchableOpacity>
       </View>
       <FlatList
         data={friendRequests}
@@ -137,6 +224,30 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginLeft: 10,
   },
+  toggleContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginVertical: 10,
+  },
+  toggleButton: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    backgroundColor: "#e0e0e0",
+    marginHorizontal: 5,
+    alignItems: "center",
+  },
+  activeToggleButton: {
+    backgroundColor: "#007aff",
+  },
+  toggleButtonText: {
+    fontSize: 16,
+    color: "#000",
+  },
+  activeToggleButtonText: {
+    color: "#fff",
+  },
   requestList: {
     flex: 1,
   },
@@ -145,13 +256,28 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#ccc",
   },
-  requestText: {
+  profileCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  profilePicture: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "#e0e0e0",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
+  },
+  usernameText: {
+    flex: 1,
     fontSize: 16,
+    fontWeight: "bold",
   },
   buttonContainer: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    marginTop: 10,
   },
   acceptButton: {
     backgroundColor: "#007bff",
@@ -189,6 +315,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
+  },
+  inviteButton: {
+    backgroundColor: "#007bff",
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 5,
+  },
+  invitedButton: {
+    backgroundColor: "#b3d9ff",
   },
 });
 
