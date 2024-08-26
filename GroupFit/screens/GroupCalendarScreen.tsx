@@ -65,9 +65,6 @@ const GroupCalendarScreen = ({ routeName }: GroupCalendarScreenProps) => {
   const rootNavigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
-  const calendarNavigation =
-    useNavigation<NativeStackNavigationProp<CalendarStackParamList>>();
-
   useEffect(() => {
     const filteredTasks = tasks.filter((task) => task.grouping_id === groupId);
 
@@ -106,9 +103,10 @@ const GroupCalendarScreen = ({ routeName }: GroupCalendarScreenProps) => {
         (task) => task.start_date_time.split("T")[0] === dateString
       );
       if (hasTasks) {
-        calendarNavigation.navigate("DayViewCalendar", {
+        navigation.navigate("GroupDayViewCalendar", {
           date: dateString,
           calendarName: group?.name || "Group Calendar",
+          groupId: groupId,
         });
       } else {
         rootNavigation.navigate("TaskForm", {

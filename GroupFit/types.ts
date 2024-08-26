@@ -13,15 +13,19 @@ export type CalendarStackParamList = {
   CalendarScreen: undefined;
   DayViewCalendar: { date: string; calendarName: string }; 
 };
-
 export type CommunitiesStackParamList = {
   CommunitiesScreen: undefined;
   FriendRequests: undefined;
   FriendSelection: undefined;
   AddFriends: undefined;
-  GroupCalendarScreen: { groupId: string }; // Add this line
+  GroupCalendarScreen: { groupId: string; routeName?: string };
+  GroupDayViewCalendar: {
+    date: string;
+    calendarName: string;
+    groupId: string;
+    routeName?: string;
+  };
 };
-
 
 //Task Detail interface
 export interface Task {
