@@ -48,21 +48,36 @@ export const useTasks = () => {
 
   useEffect(() => {
     if (selectedGrouping) {
-      const fetchMembers = async () => {
+      /**
+       * Fetches the members of the selected grouping.
+       */
+      const fetchMembers = async (): Promise<void> => {
+        /**
+         * Fetches the grouping members from the database.
+         */
         const memberData = await supabase
           .from("grouping_members")
           .select("user_id, role")
           .eq("grouping_id", selectedGrouping);
 
+        /**
+         * Fetches the profiles from the database.
+         */
         const profilesData = await supabase
           .from("profiles")
           .select("id, full_name");
 
+        /**
+         * Combines the member and profile data into a single array.
+         */
         const combinedData = memberData?.data?.map((member) => {
           const profile = profilesData?.data?.find((profile) => profile.id === member.user_id);
           return { id: member.user_id, name: profile?.full_name, role: member.role };
         }) || [];
 
+        /**
+         * Sets the state with the combined data.
+         */
         setMembers(combinedData);
       };
 
@@ -107,9 +122,8 @@ export const useTasks = () => {
       throw new Error("User not authenticated");
     }
     await updateTask(taskId, taskData);
-    setTasks((prevTasks) =>
-      prevTasks.map((task) => (task.id === taskId ? { ...task, ...taskData } : task))
-    );
+    const updatedTasks = await getTasks(user.id);
+    setTasks(updatedTasks);
   };
 
   const handleDeleteTask = async (taskId: string) => {

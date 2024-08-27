@@ -85,6 +85,7 @@ export const getTasks = async (userId: string): Promise<Task[]> => {
 };
 
 export const updateTask = async (taskId: string, taskData: TaskData): Promise<void> => {
+
   try {
     const { error } = await supabase
       .from("tasks")

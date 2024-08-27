@@ -165,11 +165,8 @@ export const TaskProvider = ({ children }: TaskProviderProps) => {
       throw new Error("User not authenticated");
     }
     await updateTask(taskId, taskData);
-    setTasks((prevTasks) =>
-      prevTasks.map((task) =>
-        task.id === taskId ? { ...task, ...taskData } : task
-      )
-    );
+    const updatedTasks = await getTasks(user.id);
+    setTasks(updatedTasks);
   };
 
   const handleDeleteTask = async (taskId: string) => {

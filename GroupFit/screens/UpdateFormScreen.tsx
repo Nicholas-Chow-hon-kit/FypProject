@@ -53,6 +53,13 @@ const UpdateForm: React.FC<UpdateFormProps> = ({
     if (selectedGrouping) {
       setGroupColor(selectedGrouping.default_color);
     }
+
+    if (editedTask.grouping === "Personal") {
+      const groupingId = getGroupingIdByName(groupings, "Personal");
+      if (groupingId !== null) {
+        editedTask.grouping = groupingId;
+      }
+    }
   }, [editedTask.grouping, groupings]);
 
   const handleChange = (
@@ -102,7 +109,7 @@ const UpdateForm: React.FC<UpdateFormProps> = ({
       grouping_id: editedTask.grouping,
       notes: editedTask.notes,
       priority: editedTask.priority,
-      created_by: String(user),
+      created_by: String(user?.id),
     };
 
     if (editedTask.notificationDate && editedTask.notificationTime) {
@@ -132,6 +139,14 @@ const UpdateForm: React.FC<UpdateFormProps> = ({
 
   const onSelectColor = ({ hex }: ColorObject) => {
     setGroupColor(hex);
+  };
+
+  const getGroupingIdByName = (
+    groupings: any[],
+    name: string
+  ): string | null => {
+    const grouping = groupings.find((grouping) => grouping.name === name);
+    return grouping ? grouping.id : null;
   };
 
   return (
