@@ -1,4 +1,3 @@
-// src/screens/GroupDayViewCalendar.tsx
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -30,7 +29,9 @@ type GroupDayViewCalendarRouteProp = RouteProp<
   "GroupDayViewCalendar"
 >;
 
-const GroupDayViewCalendar: React.FC = () => {
+const GroupDayViewCalendar: React.FC<{ routeName: string }> = ({
+  routeName,
+}) => {
   const { tasks, groupings } = useTasks();
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);

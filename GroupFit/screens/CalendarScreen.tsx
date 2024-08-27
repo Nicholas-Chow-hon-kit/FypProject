@@ -57,11 +57,13 @@ const CalendarScreen: React.FC = () => {
           events: [],
         };
       }
-      eventsMap[dateString].events.push({ title: task.title });
+      const grouping = groupings.find((g) => g.id === task.grouping_id);
+      const color = grouping ? grouping.default_color : "#000000"; // Default to black if no color found
+      eventsMap[dateString].events.push({ title: task.title, color });
     });
 
     setEvents(eventsMap);
-  }, [tasks, selectedFilters]);
+  }, [tasks, selectedFilters, groupings]);
 
   const fetchSelectedFilters = async () => {
     const { data, error } = await supabase

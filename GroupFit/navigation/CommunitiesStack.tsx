@@ -6,6 +6,7 @@ import FriendSelectionScreen from "../screens/FriendSelectionScreen";
 import AddFriendsScreen from "../screens/AddFriendsScreen";
 import GroupCalendarScreen from "../screens/GroupCalendarScreen";
 import GroupDayViewCalendar from "../screens/GroupDayViewCalendar";
+import GroupDetailsScreen from "../screens/GroupDetailsScreen";
 import { CommunitiesStackParamList } from "../types";
 
 const Stack = createNativeStackNavigator<CommunitiesStackParamList>();
@@ -32,10 +33,14 @@ const CommunitiesStack = () => {
           <GroupCalendarScreen {...props} routeName="GroupCalendarScreen" />
         )}
       </Stack.Screen>
-      <Stack.Screen
-        name="GroupDayViewCalendar"
-        component={GroupDayViewCalendar}
-      />
+      <Stack.Screen name="GroupDayViewCalendar">
+        {(props) => (
+          <GroupDayViewCalendar {...props} routeName="GroupDayViewCalendar" />
+        )}
+      </Stack.Screen>
+      <Stack.Screen name="GroupDetails">
+        {(props) => <GroupDetailsScreen {...props} routeName="GroupDetails" />}
+      </Stack.Screen>
     </Stack.Navigator>
   );
 };

@@ -12,6 +12,7 @@ export interface DateObject {
 
 export interface Event {
   title: string;
+  color: string; // Add color property to represent the grouping's default color
 }
 
 export interface Events {
@@ -82,9 +83,23 @@ const GridCalendar: React.FC<GridCalendarProps> = ({
               </Text>
             </View>
             {dayEvents.map((event, index) => (
-              <Text key={index} style={styles.eventText}>
-                {event.title}
-              </Text>
+              <View key={index} style={styles.eventContainer}>
+                <View
+                  style={[
+                    styles.eventBar,
+                    {
+                      backgroundColor: event.color, // Ensure color is passed
+                      height: event.title.length > 9 ? 24 : 16, // Adjust height based on content length
+                    },
+                  ]}
+                />
+                <Text
+                  style={styles.eventTitle}
+                  numberOfLines={2} // Limit text to 2 lines
+                  ellipsizeMode="tail">
+                  {event.title}
+                </Text>
+              </View>
             ))}
           </Pressable>
         );
@@ -129,10 +144,20 @@ const styles = StyleSheet.create({
   todayText: {
     color: "white",
   },
-  eventText: {
+  eventContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 2,
+  },
+  eventBar: {
+    width: 4,
+    marginRight: 4,
+  },
+  eventTitle: {
     fontSize: 10,
-    color: "blue",
-    textAlign: "center",
+    color: "black",
+    flex: 1,
+    paddingRight: 3,
   },
   disabled: {
     opacity: 0.5,

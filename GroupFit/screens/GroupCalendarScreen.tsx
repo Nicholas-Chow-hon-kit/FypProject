@@ -38,6 +38,7 @@ export interface Events {
 
 type Event = {
   title: string;
+  color: string; // Add color property to represent the grouping's default color
 };
 
 const GroupCalendarScreen = ({ routeName }: GroupCalendarScreenProps) => {
@@ -77,11 +78,12 @@ const GroupCalendarScreen = ({ routeName }: GroupCalendarScreenProps) => {
           events: [],
         };
       }
-      eventsMap[dateString].events.push({ title: task.title });
+      const color = group ? group.default_color : "#000000"; // Use group's default color
+      eventsMap[dateString].events.push({ title: task.title, color });
     });
 
     setEvents(eventsMap);
-  }, [tasks, groupId]);
+  }, [tasks, groupId, group]);
 
   const fetchGroupDetails = async () => {
     const { data, error } = await supabase
@@ -126,18 +128,22 @@ const GroupCalendarScreen = ({ routeName }: GroupCalendarScreenProps) => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="black" />
         </TouchableOpacity>
-        {group && (
-          <View style={styles.groupProfileCircle}>
-            <View
-              style={[
-                styles.groupProfileCircleInner,
-                { backgroundColor: group.default_color },
-              ]}>
-              <Text style={styles.groupProfileText}>{group.name[0]}</Text>
+        <TouchableOpacity
+          style={styles.groupProfileContainer}
+          onPress={() => navigation.navigate("GroupDetails", { groupId })}>
+          {group && (
+            <View style={styles.groupProfileCircle}>
+              <View
+                style={[
+                  styles.groupProfileCircleInner,
+                  { backgroundColor: group.default_color },
+                ]}>
+                <Text style={styles.groupProfileText}>{group.name[0]}</Text>
+              </View>
             </View>
-          </View>
-        )}
-        <Text style={styles.calendarNameText}>{group?.name}</Text>
+          )}
+          <Text style={styles.calendarNameText}>{group?.name}</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.iconButton}>
           <Ionicons name="search" size={24} color="black" />
         </TouchableOpacity>
@@ -167,6 +173,11 @@ const styles = StyleSheet.create({
     padding: 10,
     borderBottomWidth: 1,
     borderBottomColor: "#ccc",
+  },
+  groupProfileContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
   },
   groupProfileCircle: {
     width: 40,
