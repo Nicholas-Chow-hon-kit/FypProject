@@ -6,6 +6,7 @@ import {
   TextInput,
   FlatList,
   TouchableOpacity,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -95,22 +96,28 @@ const CommunitiesScreen = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <View style={styles.logoContainer}>
+          <Image
+            source={require("../assets/Logo/groupfit-high-resolution-logo-black-transparent-Side.png")}
+            style={styles.logo}
+          />
+          <TouchableOpacity
+            style={styles.friendRequestsIcon}
+            onPress={() => navigation.navigate("FriendRequests")}>
+            <Ionicons name="people" size={24} color="black" />
+            {friendRequestsCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{friendRequestsCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
         <TextInput
           style={styles.searchInput}
           placeholder="Search groups"
           value={searchQuery}
           onChangeText={handleSearch}
         />
-        <TouchableOpacity
-          style={styles.friendRequestsIcon}
-          onPress={() => navigation.navigate("FriendRequests")}>
-          <Ionicons name="people" size={24} color="black" />
-          {friendRequestsCount > 0 && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{friendRequestsCount}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
       </View>
       <FlatList
         data={groups}
@@ -133,20 +140,25 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   header: {
+    padding: 10,
+  },
+  logoContainer: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  logo: {
+    width: 150,
+    height: 50,
   },
   searchInput: {
-    flex: 1,
-    height: 40,
+    backgroundColor: "#f0f0f0",
+    height: 45,
     borderWidth: 1,
     borderColor: "#ccc",
-    borderRadius: 5,
+    borderRadius: 25,
     paddingHorizontal: 10,
-    marginRight: 10,
   },
   friendRequestsIcon: {
     position: "relative",
@@ -173,8 +185,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
   },
   groupProfileCircle: {
     width: 50,

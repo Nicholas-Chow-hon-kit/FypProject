@@ -1,3 +1,4 @@
+// src/screens/AddMembers.tsx
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -14,39 +15,39 @@ import { useAuth } from "../contexts/AuthProvider";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { CommunitiesStackParamList } from "../types";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
-import ColorPickerModal from "../components/ColorPickerModal"; // Import the color picker modal
-import { useTasks } from "../contexts/TaskProvider";
+import { useNavigation, useRoute } from "@react-navigation/native";
 
-type FriendSelectionScreenProps = NativeStackScreenProps<
+type AddMembersScreenProps = NativeStackScreenProps<
   CommunitiesStackParamList,
-  "FriendSelection"
+  "AddMembers"
 > & {
   routeName: string;
 };
 
-const FriendSelectionScreen = ({
-  navigation,
-  routeName,
-}: FriendSelectionScreenProps) => {
+const AddMembersScreen = ({ routeName }: AddMembersScreenProps) => {
   const { user } = useAuth();
-  const { fetchGroupings } = useTasks(); // Get the fetchGroupings function from the useTasks hook
   const [friends, setFriends] = useState<{ id: any; username: any }[]>([]);
   const [selectedFriends, setSelectedFriends] = useState<(string | number)[]>(
     []
   );
-  const [groupName, setGroupName] = useState("");
-  const [groupColor, setGroupColor] = useState("#54c5c9"); // State for the group color
-  const [showColorModal, setShowColorModal] = useState(false); // State to control the color picker modal visibility
   const [searchQuery, setSearchQuery] = useState("");
-  const [isSearchMode, setIsSearchMode] = useState(false);
   const [filteredFriends, setFilteredFriends] = useState<
     { id: any; username: any }[]
   >([]);
+  const [currentGroupMembers, setCurrentGroupMembers] = useState<string[]>([]);
+
+  const navigation = useNavigation();
+  const route = useRoute<AddMembersScreenProps["route"]>();
+  const { groupId } = route.params;
 
   useEffect(() => {
     fetchFriends();
+    fetchCurrentGroupMembers();
   }, []);
+
+  useEffect(() => {
+    filterFriends();
+  }, [currentGroupMembers]);
 
   const fetchFriends = async () => {
     const { data, error } = await supabase
@@ -70,9 +71,30 @@ const FriendSelectionScreen = ({
         console.error("Error fetching friend profiles:", friendError);
       } else {
         setFriends(friendData);
-        setFilteredFriends(friendData);
+        filterFriends();
       }
     }
+  };
+
+  const fetchCurrentGroupMembers = async () => {
+    const { data, error } = await supabase
+      .from("grouping_members")
+      .select("user_id")
+      .eq("grouping_id", groupId);
+
+    if (error) {
+      console.error("Error fetching current group members:", error);
+    } else {
+      const memberIds = data.map((member) => member.user_id);
+      setCurrentGroupMembers(memberIds);
+    }
+  };
+
+  const filterFriends = () => {
+    const filtered = friends.filter(
+      (friend) => !currentGroupMembers.includes(friend.id)
+    );
+    setFilteredFriends(filtered);
   };
 
   const handleSelectFriend = (friendId: number | string) => {
@@ -83,32 +105,9 @@ const FriendSelectionScreen = ({
     }
   };
 
-  const handleCreateGroup = async () => {
-    // Include the user's ID in the members array
-    const membersWithUser = [...selectedFriends, user?.id];
-
-    // Insert the new grouping
-    const { data: groupingData, error: groupingError } = await supabase
-      .from("groupings")
-      .insert([
-        {
-          name: groupName,
-          created_by: user?.id,
-          default_color: groupColor,
-        },
-      ])
-      .select("id"); // Select the ID of the newly created grouping
-
-    if (groupingError) {
-      console.error("Error creating group:", groupingError);
-      return;
-    }
-
-    const groupingId = groupingData[0].id;
-
-    // Insert the members into the grouping_members table
-    const memberInsertData = membersWithUser.map((memberId) => ({
-      grouping_id: groupingId,
+  const handleAddMembers = async () => {
+    const memberInsertData = selectedFriends.map((memberId) => ({
+      grouping_id: groupId,
       user_id: memberId,
       role: "member", // You can set the role as needed
     }));
@@ -122,10 +121,7 @@ const FriendSelectionScreen = ({
       return;
     }
 
-    // Refetch the groupings
-    await fetchGroupings();
-
-    navigation.navigate("CommunitiesScreen");
+    navigation.goBack();
   };
 
   const handleSearch = (query: string) => {
@@ -134,14 +130,6 @@ const FriendSelectionScreen = ({
       friend.username.toLowerCase().includes(query.toLowerCase())
     );
     setFilteredFriends(filtered);
-  };
-
-  const toggleSearchMode = () => {
-    setIsSearchMode(!isSearchMode);
-    if (!isSearchMode) {
-      setSearchQuery("");
-      setFilteredFriends(friends);
-    }
   };
 
   interface FriendItem {
@@ -173,55 +161,27 @@ const FriendSelectionScreen = ({
       behavior={Platform.OS === "android" ? "padding" : "height"}
       style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.headerTitle}>Create Group</Text>
-        <TextInput
-          style={styles.groupNameInput}
-          placeholder="Group name"
-          value={groupName}
-          onChangeText={setGroupName}
-        />
-        <View style={styles.colorPickerContainer}>
-          <Text style={styles.colorPickerLabel}>Group Color:</Text>
-          <TouchableOpacity
-            style={[styles.colorCircle, { backgroundColor: groupColor }]}
-            onPress={() => setShowColorModal(true)}
-          />
-        </View>
-        <ColorPickerModal
-          visible={showColorModal}
-          onClose={() => setShowColorModal(false)}
-          onSelectColor={(color) => setGroupColor(color.hex)}
-          currentColor={groupColor}
-        />
-        <View style={styles.separator} />
+        <Text style={styles.headerTitle}>Add Members</Text>
+
         <Text style={styles.instructionsText}>
           Tap on members in the friend list to select and deselect them for the
           group.
         </Text>
-        <View style={styles.friendsHeader}>
-          <Text style={styles.friendsCount}>{friends.length}</Text>
-          <Text style={styles.friendsTitle}> Friend</Text>
-          <TouchableOpacity
-            style={styles.searchIcon}
-            onPress={toggleSearchMode}>
-            <Ionicons
-              name={isSearchMode ? "close" : "search"}
-              size={24}
-              color="gray"
-            />
-          </TouchableOpacity>
-        </View>
-        {isSearchMode && (
+        <View style={styles.searchContainer}>
           <TextInput
             style={styles.searchInput}
             placeholder="Search friends..."
             value={searchQuery}
             onChangeText={handleSearch}
-            autoFocus
           />
-        )}
+          <TouchableOpacity
+            style={styles.searchIcon}
+            onPress={() => setSearchQuery("")}>
+            <Ionicons name="close" size={24} color="gray" />
+          </TouchableOpacity>
+        </View>
         <FlatList
-          data={isSearchMode ? filteredFriends : friends}
+          data={filteredFriends}
           renderItem={renderFriendCard}
           keyExtractor={(item) => item.id.toString()}
           style={styles.friendList}
@@ -234,8 +194,8 @@ const FriendSelectionScreen = ({
           <Text style={styles.tabButtonText}>Cancel</Text>
         </TouchableOpacity>
         <View style={styles.separator} />
-        <TouchableOpacity style={styles.tabButton} onPress={handleCreateGroup}>
-          <Text style={styles.tabButtonText}>OK</Text>
+        <TouchableOpacity style={styles.tabButton} onPress={handleAddMembers}>
+          <Text style={styles.tabButtonText}>Add</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -260,32 +220,6 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     paddingBottom: 12,
   },
-  groupNameInput: {
-    height: 40,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 25,
-    paddingHorizontal: 10,
-    marginVertical: 10,
-  },
-  colorPickerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginHorizontal: 5,
-    marginVertical: 10,
-    marginBottom: 20,
-  },
-  colorPickerLabel: {
-    fontSize: 16,
-    marginRight: 10,
-  },
-  colorCircle: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    borderWidth: 1,
-    borderColor: "#ccc",
-  },
   separator: {
     height: 1,
     backgroundColor: "#ccc",
@@ -296,31 +230,21 @@ const styles = StyleSheet.create({
     color: "gray",
     marginBottom: 10,
   },
-  friendsHeader: {
+  searchContainer: {
     flexDirection: "row",
-    justifyContent: "flex-start",
     alignItems: "center",
     marginBottom: 10,
   },
-  friendsTitle: {
-    fontSize: 18,
-    color: "gray",
-  },
-  friendsCount: {
-    fontSize: 18,
-    color: "gray",
-    marginRight: 5,
-  },
-  searchIcon: {
-    marginLeft: "auto",
-  },
   searchInput: {
+    flex: 1,
     height: 40,
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 25,
     paddingHorizontal: 10,
-    marginBottom: 10,
+  },
+  searchIcon: {
+    marginLeft: 10,
   },
   friendList: {
     flex: 1,
@@ -362,4 +286,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default FriendSelectionScreen;
+export default AddMembersScreen;

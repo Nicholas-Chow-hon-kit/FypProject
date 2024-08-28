@@ -26,6 +26,8 @@ export type CommunitiesStackParamList = {
     routeName?: string;
   };
   GroupDetails: { groupId: string; routeName?: string };
+  GroupNameChange: { groupId: string; groupName: string; routeName?: string };
+  AddMembers: { groupId: string };
 };
 
 //Task Detail interface

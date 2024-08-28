@@ -12,7 +12,7 @@ import {
 import { Calendar } from "react-native-calendars";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { CommunitiesStackParamList } from "../types";
+import { CommunitiesStackParamList, RootStackParamList } from "../types";
 import { useTasks } from "../contexts/TaskProvider";
 import { Task } from "../contexts/TaskProvider.types";
 import TaskCard from "../components/TaskCard";
@@ -103,6 +103,9 @@ const GroupDayViewCalendar: React.FC<{ routeName: string }> = ({
     setSearchResults([]);
   };
 
+  const rootNavigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="default" />
@@ -151,6 +154,18 @@ const GroupDayViewCalendar: React.FC<{ routeName: string }> = ({
           keyExtractor={(item) => item.id}
           style={styles.taskList}
         />
+        {!searchMode && (
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() =>
+              rootNavigation.navigate("TaskForm", {
+                date: selectedDate,
+                groupParams: calendarName,
+              })
+            }>
+            <Ionicons name="add" size={24} color="white" />
+          </TouchableOpacity>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -176,7 +191,6 @@ const styles = StyleSheet.create({
   searchHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
   },
   title: {
     fontSize: 20,
@@ -201,6 +215,25 @@ const styles = StyleSheet.create({
     borderBottomColor: "gray",
     borderBottomWidth: 1,
     marginTop: 20,
+  },
+  addButton: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "#007aff",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
 });
 

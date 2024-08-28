@@ -20,6 +20,9 @@ const TabNavigator = ({ routeName }: { routeName?: string }) => {
     routeName === "FriendSelection" ||
     routeName === "AddFriends" ||
     routeName === "GroupDayViewCalendar" ||
+    routeName === "GroupDetails" ||
+    routeName === "GroupNameChange" ||
+    routeName === "AddMembers" ||
     routeName === "GroupCalendarScreen";
 
   return (

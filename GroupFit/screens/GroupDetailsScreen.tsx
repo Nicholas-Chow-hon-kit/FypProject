@@ -1,3 +1,4 @@
+// src/screens/GroupDetailsScreen.tsx
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -15,6 +16,7 @@ import { CommunitiesStackParamList } from "../types";
 import { supabase } from "../lib/supabase";
 import { RouteProp } from "@react-navigation/native";
 import { Menu, Provider } from "react-native-paper";
+import ColorPickerModal from "../components/ColorPickerModal"; // Import the color picker modal
 
 type GroupDetailsScreenNavigationProp = NativeStackNavigationProp<
   CommunitiesStackParamList,
@@ -45,6 +47,14 @@ const GroupDetailsScreen: React.FC<{ routeName: string }> = ({ routeName }) => {
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [visible, setVisible] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
+  const [contextMenuVisible, setContextMenuVisible] = useState(false);
+  const [contextMenuAnchor, setContextMenuAnchor] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [showColorModal, setShowColorModal] = useState(false); // State for the color picker modal
+  const [groupColor, setGroupColor] = useState("#54c5c9"); // State for the group color
 
   useEffect(() => {
     fetchGroupDetails();
@@ -63,6 +73,7 @@ const GroupDetailsScreen: React.FC<{ routeName: string }> = ({ routeName }) => {
     } else {
       setGroup(data);
       setNewGroupName(data.name);
+      setGroupColor(data.default_color); // Set the group color
     }
   };
 
@@ -110,7 +121,16 @@ const GroupDetailsScreen: React.FC<{ routeName: string }> = ({ routeName }) => {
   }: {
     item: { id: string; name: string; role: string; avatar_url?: string };
   }) => (
-    <View style={styles.memberItem}>
+    <TouchableOpacity
+      style={styles.memberItem}
+      onLongPress={(event) => {
+        setSelectedMemberId(item.id);
+        setContextMenuAnchor({
+          x: event.nativeEvent.pageX,
+          y: event.nativeEvent.pageY,
+        });
+        setContextMenuVisible(true);
+      }}>
       {item.avatar_url ? (
         <Image source={{ uri: item.avatar_url }} style={styles.memberAvatar} />
       ) : (
@@ -122,7 +142,7 @@ const GroupDetailsScreen: React.FC<{ routeName: string }> = ({ routeName }) => {
         <Text style={styles.memberName}>{item.name}</Text>
         <Text style={styles.memberRole}>{item.role}</Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   const handleSearch = (query: string) => {
@@ -145,18 +165,42 @@ const GroupDetailsScreen: React.FC<{ routeName: string }> = ({ routeName }) => {
   const closeMenu = () => setVisible(false);
 
   const updateGroupName = async () => {
-    const { data, error } = await supabase
-      .from("groupings")
-      .update({ name: newGroupName })
-      .eq("id", groupId)
-      .single();
+    navigation.navigate("GroupNameChange", {
+      groupId,
+      groupName: group?.name ?? "",
+    });
+  };
 
-    if (error) {
-      console.error("Error updating group name:", error);
-    } else {
-      setGroup(data);
-      closeMenu();
+  const addMembers = () => {
+    navigation.navigate("AddMembers", { groupId });
+  };
+
+  const removeMember = async () => {
+    if (selectedMemberId) {
+      const { error } = await supabase
+        .from("grouping_members")
+        .delete()
+        .eq("grouping_id", groupId)
+        .eq("user_id", selectedMemberId);
+
+      if (error) {
+        console.error("Error removing member:", error);
+      } else {
+        setMembers(members.filter((member) => member.id !== selectedMemberId));
+        setFilteredMembers(
+          filteredMembers.filter((member) => member.id !== selectedMemberId)
+        );
+        setContextMenuVisible(false);
+      }
     }
+  };
+
+  const handleColorChange = async (color: string) => {
+    setGroupColor(color);
+    await supabase
+      .from("groupings")
+      .update({ default_color: color })
+      .eq("id", groupId);
   };
 
   return (
@@ -207,6 +251,11 @@ const GroupDetailsScreen: React.FC<{ routeName: string }> = ({ routeName }) => {
                   title="Change Group Name"
                   titleStyle={{ color: "black" }}
                 />
+                <Menu.Item
+                  onPress={addMembers}
+                  title="Add Members"
+                  titleStyle={{ color: "black" }}
+                />
               </Menu>
             </View>
           </View>
@@ -216,11 +265,23 @@ const GroupDetailsScreen: React.FC<{ routeName: string }> = ({ routeName }) => {
             <View
               style={[
                 styles.groupProfileCircle,
-                { backgroundColor: group.default_color },
+                { backgroundColor: groupColor },
               ]}>
               <Text style={styles.groupProfileText}>{group.name[0]}</Text>
             </View>
-            <Text style={styles.groupName}>{group.name}</Text>
+            <View style={styles.groupNameContainer}>
+              <Text style={styles.groupName}>{group.name}</Text>
+              <TouchableOpacity
+                style={styles.colorCircle}
+                onPress={() => setShowColorModal(true)}>
+                <View
+                  style={[
+                    styles.colorCircleInner,
+                    { backgroundColor: groupColor },
+                  ]}
+                />
+              </TouchableOpacity>
+            </View>
             <Text style={styles.memberCount}>{members.length} members</Text>
           </View>
         )}
@@ -243,6 +304,19 @@ const GroupDetailsScreen: React.FC<{ routeName: string }> = ({ routeName }) => {
             <Text style={styles.exitText}>Exit Group</Text>
           </TouchableOpacity>
         )}
+        <Menu
+          visible={contextMenuVisible}
+          onDismiss={() => setContextMenuVisible(false)}
+          anchor={contextMenuAnchor ?? { x: 0, y: 0 }}
+          contentStyle={{ backgroundColor: "white" }}>
+          <Menu.Item onPress={removeMember} title="Remove Member" />
+        </Menu>
+        <ColorPickerModal
+          visible={showColorModal}
+          onClose={() => setShowColorModal(false)}
+          onSelectColor={(color) => handleColorChange(color.hex)}
+          currentColor={groupColor}
+        />
       </View>
     </Provider>
   );
@@ -296,10 +370,14 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontWeight: "bold",
   },
+  groupNameContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
   groupName: {
     fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 5,
+    marginRight: 10,
   },
   memberCount: {
     fontSize: 16,
@@ -366,6 +444,20 @@ const styles = StyleSheet.create({
     color: "red",
     fontSize: 18,
     marginLeft: 10,
+  },
+  colorCircle: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  colorCircleInner: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
   },
 });
 

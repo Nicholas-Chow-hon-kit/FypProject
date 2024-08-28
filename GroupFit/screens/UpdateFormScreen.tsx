@@ -8,6 +8,9 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
+  Modal,
+  TouchableWithoutFeedback,
+  Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import ColorPickerModal from "../components/ColorPickerModal";
@@ -39,12 +42,13 @@ const UpdateForm: React.FC<UpdateFormProps> = ({
 }) => {
   const { task } = route.params;
   const { user } = useAuth();
-  const { groupings, updateTask } = useTasks();
+  const { groupings, updateTask, deleteTask } = useTasks();
 
   const [editedTask, setEditedTask] = useState<Task>(task);
   const [groupColor, setGroupColor] = useState("#54c5c9");
   const [showColorModal, setShowColorModal] = useState(false);
   const [showNotificationPickers, setShowNotificationPickers] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
     const selectedGrouping = groupings.find(
@@ -137,6 +141,20 @@ const UpdateForm: React.FC<UpdateFormProps> = ({
     navigation.goBack();
   };
 
+  const handleDelete = () => {
+    setModalVisible(true);
+  };
+
+  const confirmDelete = () => {
+    deleteTask(editedTask.id);
+    setModalVisible(false);
+    navigation.goBack();
+  };
+
+  const cancelDelete = () => {
+    setModalVisible(false);
+  };
+
   const onSelectColor = ({ hex }: ColorObject) => {
     setGroupColor(hex);
   };
@@ -149,6 +167,10 @@ const UpdateForm: React.FC<UpdateFormProps> = ({
     return grouping ? grouping.id : null;
   };
 
+  const { width, height } = Dimensions.get("window");
+  const modalWidth = 300; // Set your modal's width
+  const modalHeight = 200; // Set your modal's height
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
@@ -159,6 +181,9 @@ const UpdateForm: React.FC<UpdateFormProps> = ({
             value={editedTask.title}
             onChangeText={(text) => handleChange("title", text)}
           />
+          <TouchableOpacity onPress={handleDelete} style={styles.deleteIcon}>
+            <Ionicons name="trash-bin" size={24} color="red" />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.labelContainer}>
@@ -317,6 +342,40 @@ const UpdateForm: React.FC<UpdateFormProps> = ({
           <Text style={styles.buttonText}>Save</Text>
         </TouchableOpacity>
       </View>
+
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}>
+        <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+          <View style={styles.modalOverlay} />
+        </TouchableWithoutFeedback>
+        <View
+          style={[
+            styles.modalContent,
+            {
+              transform: [
+                { translateX: -modalWidth / 2 },
+                { translateY: -modalHeight / 2 },
+              ],
+            },
+          ]}>
+          <Text style={styles.modalText}>
+            Are you sure you want to delete this task?
+          </Text>
+          <View style={styles.modalButtons}>
+            <TouchableOpacity style={styles.modalButton} onPress={cancelDelete}>
+              <Text style={styles.modalButtonText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.deleteButton]}
+              onPress={confirmDelete}>
+              <Text style={styles.deleteButtonText}>Delete</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -437,6 +496,58 @@ const styles = StyleSheet.create({
   picker: {
     flex: 1,
     marginLeft: 8,
+  },
+  deleteIcon: {
+    marginLeft: 10,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    backgroundColor: "white",
+    borderRadius: 10,
+    padding: 20,
+    width: 300, // Set your modal's width
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  modalText: {
+    fontSize: 18,
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "100%",
+  },
+  modalButton: {
+    padding: 10,
+    borderRadius: 5,
+  },
+  modalButtonText: {
+    fontSize: 16,
+    color: "#007aff",
+  },
+  deleteButton: {
+    backgroundColor: "transparent",
+  },
+  deleteButtonText: {
+    fontSize: 16,
+    color: "red",
   },
 });
 

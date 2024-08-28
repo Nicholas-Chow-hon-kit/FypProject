@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { AuthProvider } from "./contexts/AuthProvider"; // Adjust the path
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { AuthProvider } from "./contexts/AuthProvider";
 import {
   NavigationContainer,
   createNavigationContainerRef,
@@ -20,32 +21,36 @@ export default function App() {
   const [routeName, setRouteName] = useState<string | undefined>();
 
   return (
-    <NavigationContainer
-      ref={ref}
-      onReady={() => {
-        setRouteName(ref.getCurrentRoute()?.name);
-      }}
-      onStateChange={async () => {
-        const currentRouteName = ref.getCurrentRoute()?.name;
-        setRouteName(currentRouteName);
-      }}>
-      <AuthProvider>
-        <TaskProvider>
-          <Stack.Navigator screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="Auth" component={Auth} />
-            <Stack.Screen name="ProfileSetup" component={ProfileSetup} />
-            <Stack.Screen name="HomeTabs">
-              {(props) => <TabNavigator {...props} routeName={routeName} />}
-            </Stack.Screen>
-            <Stack.Screen name="TaskForm">
-              {(props) => <TaskFormScreen {...props} routeName={routeName} />}
-            </Stack.Screen>
-            <Stack.Screen name="UpdateForm">
-              {(props) => <UpdateFormScreen {...props} routeName={routeName} />}
-            </Stack.Screen>
-          </Stack.Navigator>
-        </TaskProvider>
-      </AuthProvider>
-    </NavigationContainer>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <NavigationContainer
+        ref={ref}
+        onReady={() => {
+          setRouteName(ref.getCurrentRoute()?.name);
+        }}
+        onStateChange={async () => {
+          const currentRouteName = ref.getCurrentRoute()?.name;
+          setRouteName(currentRouteName);
+        }}>
+        <AuthProvider>
+          <TaskProvider>
+            <Stack.Navigator screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="Auth" component={Auth} />
+              <Stack.Screen name="ProfileSetup" component={ProfileSetup} />
+              <Stack.Screen name="HomeTabs">
+                {(props) => <TabNavigator {...props} routeName={routeName} />}
+              </Stack.Screen>
+              <Stack.Screen name="TaskForm">
+                {(props) => <TaskFormScreen {...props} routeName={routeName} />}
+              </Stack.Screen>
+              <Stack.Screen name="UpdateForm">
+                {(props) => (
+                  <UpdateFormScreen {...props} routeName={routeName} />
+                )}
+              </Stack.Screen>
+            </Stack.Navigator>
+          </TaskProvider>
+        </AuthProvider>
+      </NavigationContainer>
+    </GestureHandlerRootView>
   );
 }

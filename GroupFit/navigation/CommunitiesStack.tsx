@@ -7,6 +7,8 @@ import AddFriendsScreen from "../screens/AddFriendsScreen";
 import GroupCalendarScreen from "../screens/GroupCalendarScreen";
 import GroupDayViewCalendar from "../screens/GroupDayViewCalendar";
 import GroupDetailsScreen from "../screens/GroupDetailsScreen";
+import GroupNameChangeScreen from "../screens/GroupNameChangeScreen";
+import AddMembersScreen from "../screens/AddMembers"; // Import the AddMembersScreen
 import { CommunitiesStackParamList } from "../types";
 
 const Stack = createNativeStackNavigator<CommunitiesStackParamList>();
@@ -40,6 +42,14 @@ const CommunitiesStack = () => {
       </Stack.Screen>
       <Stack.Screen name="GroupDetails">
         {(props) => <GroupDetailsScreen {...props} routeName="GroupDetails" />}
+      </Stack.Screen>
+      <Stack.Screen name="GroupNameChange">
+        {(props) => (
+          <GroupNameChangeScreen {...props} routeName="GroupNameChange" />
+        )}
+      </Stack.Screen>
+      <Stack.Screen name="AddMembers">
+        {(props) => <AddMembersScreen {...props} routeName="AddMembers" />}
       </Stack.Screen>
     </Stack.Navigator>
   );

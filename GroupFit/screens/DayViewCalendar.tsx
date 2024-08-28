@@ -35,6 +35,9 @@ const DayViewCalendar: React.FC<{ routeName?: string }> = ({ routeName }) => {
   const route =
     useRoute<RouteProp<CalendarStackParamList, "DayViewCalendar">>();
 
+  const rootNavigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
   useEffect(() => {
     if (route.params) {
       const date = new Date(route.params.date).toISOString().split("T")[0];
@@ -138,6 +141,15 @@ const DayViewCalendar: React.FC<{ routeName?: string }> = ({ routeName }) => {
           keyExtractor={(item) => item.id}
           style={styles.taskList}
         />
+        {!searchMode && (
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() =>
+              rootNavigation.navigate("TaskForm", { date: selectedDate })
+            }>
+            <Ionicons name="add" size={24} color="white" />
+          </TouchableOpacity>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -163,7 +175,6 @@ const styles = StyleSheet.create({
   searchHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
   },
   title: {
     fontSize: 20,
@@ -188,6 +199,25 @@ const styles = StyleSheet.create({
     borderBottomColor: "gray",
     borderBottomWidth: 1,
     marginTop: 20,
+  },
+  addButton: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "#007aff",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
 });
 
