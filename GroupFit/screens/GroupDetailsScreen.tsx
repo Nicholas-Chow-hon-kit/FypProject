@@ -1,5 +1,5 @@
 // src/screens/GroupDetailsScreen.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -57,9 +57,13 @@ const GroupDetailsScreen: React.FC<{ routeName: string }> = ({ routeName }) => {
   const [groupColor, setGroupColor] = useState("#54c5c9"); // State for the group color
 
   useEffect(() => {
-    fetchGroupDetails();
-    fetchGroupMembers();
-  }, []);
+    const unsubscribe = navigation.addListener("focus", () => {
+      fetchGroupDetails();
+      fetchGroupMembers();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
 
   const fetchGroupDetails = async () => {
     const { data, error } = await supabase
@@ -186,10 +190,9 @@ const GroupDetailsScreen: React.FC<{ routeName: string }> = ({ routeName }) => {
       if (error) {
         console.error("Error removing member:", error);
       } else {
-        setMembers(members.filter((member) => member.id !== selectedMemberId));
-        setFilteredMembers(
-          filteredMembers.filter((member) => member.id !== selectedMemberId)
-        );
+        // Refetch group details and members after removing a member
+        await fetchGroupDetails();
+        await fetchGroupMembers();
         setContextMenuVisible(false);
       }
     }

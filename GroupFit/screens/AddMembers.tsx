@@ -9,6 +9,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthProvider";
@@ -35,6 +36,7 @@ const AddMembersScreen = ({ routeName }: AddMembersScreenProps) => {
     { id: any; username: any }[]
   >([]);
   const [currentGroupMembers, setCurrentGroupMembers] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const navigation = useNavigation();
   const route = useRoute<AddMembersScreenProps["route"]>();
@@ -47,7 +49,7 @@ const AddMembersScreen = ({ routeName }: AddMembersScreenProps) => {
 
   useEffect(() => {
     filterFriends();
-  }, [currentGroupMembers]);
+  }, [currentGroupMembers, friends]);
 
   const fetchFriends = async () => {
     const { data, error } = await supabase
@@ -58,6 +60,7 @@ const AddMembersScreen = ({ routeName }: AddMembersScreenProps) => {
 
     if (error) {
       console.error("Error fetching friends:", error);
+      setLoading(false);
     } else {
       const friendIds = data.map((item) =>
         item.user_id === user?.id ? item.friend_id : item.user_id
@@ -69,9 +72,10 @@ const AddMembersScreen = ({ routeName }: AddMembersScreenProps) => {
 
       if (friendError) {
         console.error("Error fetching friend profiles:", friendError);
+        setLoading(false);
       } else {
         setFriends(friendData);
-        filterFriends();
+        setLoading(false);
       }
     }
   };
@@ -150,11 +154,19 @@ const AddMembersScreen = ({ routeName }: AddMembersScreenProps) => {
           name="checkmark-circle"
           size={24}
           color="green"
-          marginLeft="40%"
+          style={styles.checkmarkIcon}
         />
       )}
     </TouchableOpacity>
   );
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -180,12 +192,16 @@ const AddMembersScreen = ({ routeName }: AddMembersScreenProps) => {
             <Ionicons name="close" size={24} color="gray" />
           </TouchableOpacity>
         </View>
-        <FlatList
-          data={filteredFriends}
-          renderItem={renderFriendCard}
-          keyExtractor={(item) => item.id.toString()}
-          style={styles.friendList}
-        />
+        {friends.length > 0 ? (
+          <FlatList
+            data={filteredFriends}
+            renderItem={renderFriendCard}
+            keyExtractor={(item) => item.id.toString()}
+            style={styles.friendList}
+          />
+        ) : (
+          <Text style={styles.noFriendsText}>No friends available</Text>
+        )}
       </View>
       <View style={styles.bottomTabBar}>
         <TouchableOpacity
@@ -253,8 +269,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
   },
   defaultAvatar: {
     width: 50,
@@ -268,6 +282,9 @@ const styles = StyleSheet.create({
   friendNameText: {
     fontSize: 16,
     marginHorizontal: 20,
+  },
+  checkmarkIcon: {
+    marginLeft: "auto",
   },
   bottomTabBar: {
     flexDirection: "row",
@@ -283,6 +300,16 @@ const styles = StyleSheet.create({
   },
   tabButtonText: {
     fontSize: 16,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  noFriendsText: {
+    textAlign: "center",
+    marginTop: 20,
+    color: "gray",
   },
 });
 

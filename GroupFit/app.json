@@ -4,10 +4,10 @@
     "slug": "GroupFit",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/Logo/groupfit-high-resolution-logo-black-transparent-align-top.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/Logo/groupfit-high-resolution-logo-black-transparent-align-top.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -16,7 +16,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/Logo/groupfit-high-resolution-logo-black-transparent-align-top.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.anonymous.GroupFit"

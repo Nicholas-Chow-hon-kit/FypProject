@@ -23,6 +23,7 @@ interface TaskContextType {
   deleteTask: (taskId: string) => Promise<void>;
   setSelectedGrouping: (groupingId: string | null) => void;
   fetchFriendRequestsCount: () => void;
+  updateFriendRequestsCount: (count: number) => void;
   fetchGroupings: () => void; // Add fetchGroupings to the context type
 }
 
@@ -38,6 +39,7 @@ const TaskContext = createContext<TaskContextType>({
   deleteTask: async () => {},
   setSelectedGrouping: () => {},
   fetchFriendRequestsCount: () => {},
+  updateFriendRequestsCount: () => {},
   fetchGroupings: () => {}, // Add fetchGroupings to the default context value
 });
 
@@ -142,6 +144,10 @@ export const TaskProvider = ({ children }: TaskProviderProps) => {
     }
   };
 
+  const updateFriendRequestsCount = (count: number) => {
+    setFriendRequestsCount(count);
+  };
+
   const handleCreateTask = async (taskData: TaskData) => {
     if (!user) {
       throw new Error("User not authenticated");
@@ -190,6 +196,7 @@ export const TaskProvider = ({ children }: TaskProviderProps) => {
       deleteTask: handleDeleteTask,
       setSelectedGrouping,
       fetchFriendRequestsCount,
+      updateFriendRequestsCount,
       fetchGroupings, // Add fetchGroupings to the context value
     }),
     [

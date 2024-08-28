@@ -19,7 +19,7 @@ const CommunitiesStack = () => {
       <Stack.Screen name="CommunitiesScreen" component={CommunitiesScreen} />
       <Stack.Screen name="FriendRequests">
         {(props) => (
-          <FriendRequestsScreen {...props} routeName="FriendRequests" />
+          <FriendRequestsScreen {...props} routeName="Friend Requests" />
         )}
       </Stack.Screen>
       <Stack.Screen name="FriendSelection">
@@ -28,7 +28,7 @@ const CommunitiesStack = () => {
         )}
       </Stack.Screen>
       <Stack.Screen name="AddFriends">
-        {(props) => <AddFriendsScreen {...props} routeName="AddFriends" />}
+        {(props) => <AddFriendsScreen {...props} routeName="Add Friends" />}
       </Stack.Screen>
       <Stack.Screen name="GroupCalendarScreen">
         {(props) => (

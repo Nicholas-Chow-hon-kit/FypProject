@@ -200,7 +200,7 @@ const FriendSelectionScreen = ({
         </Text>
         <View style={styles.friendsHeader}>
           <Text style={styles.friendsCount}>{friends.length}</Text>
-          <Text style={styles.friendsTitle}> Friend</Text>
+          <Text style={styles.friendsTitle}> Friends</Text>
           <TouchableOpacity
             style={styles.searchIcon}
             onPress={toggleSearchMode}>

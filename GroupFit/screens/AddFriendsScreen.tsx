@@ -6,6 +6,8 @@ import {
   TextInput,
   FlatList,
   TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthProvider";
@@ -102,45 +104,62 @@ const AddFriendsScreen = ({ navigation, routeName }: AddFriendsScreenProps) => {
   };
 
   const renderUserCard = ({ item }: { item: UserProfile }) => (
-    <View style={styles.userCard}>
-      <View style={styles.profileCard}>
-        <View style={styles.profilePicture}>
-          <Ionicons name="person-circle-outline" size={48} color="black" />
-        </View>
-        <Text style={styles.usernameText}>{item.username}</Text>
-        <TouchableOpacity
-          style={[styles.inviteButton, item.isInvited && styles.invitedButton]}
-          onPress={() => handleSendRequest(item.id)}
-          disabled={item.isInvited}>
-          <Text style={styles.buttonText}>
-            {item.isInvited ? "Invited" : "Invite"}
-          </Text>
-        </TouchableOpacity>
+    <TouchableOpacity
+      style={styles.userCard}
+      onPress={() => handleSendRequest(item.id)}
+      disabled={item.isInvited}>
+      <View style={styles.defaultAvatar}>
+        <Ionicons name="person" size={24} color="gray" />
       </View>
-    </View>
+      <Text style={styles.usernameText}>{item.username}</Text>
+      <TouchableOpacity
+        style={[styles.inviteButton, item.isInvited && styles.invitedButton]}
+        onPress={() => handleSendRequest(item.id)}
+        disabled={item.isInvited}>
+        <Text style={styles.buttonText}>
+          {item.isInvited ? "Invited" : "Invite"}
+        </Text>
+      </TouchableOpacity>
+    </TouchableOpacity>
   );
 
+  const onClear = () => {
+    setSearchQuery("");
+    setSearchResults([]);
+  };
+
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="black" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{routeName}</Text>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search users by username"
-          value={searchQuery}
-          onChangeText={handleSearch}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "android" ? "padding" : "height"}
+      style={styles.container}>
+      <View style={styles.content}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={24} color="black" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{routeName}</Text>
+        </View>
+        <View style={styles.searchContainer}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search users by username"
+            value={searchQuery}
+            onChangeText={handleSearch}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity style={styles.searchIcon} onPress={onClear}>
+              <Ionicons name="close" size={24} color="gray" />
+            </TouchableOpacity>
+          )}
+        </View>
+        <FlatList
+          data={searchResults}
+          renderItem={renderUserCard}
+          keyExtractor={(item) => item.id}
+          style={styles.userList}
         />
       </View>
-      <FlatList
-        data={searchResults}
-        renderItem={renderUserCard}
-        keyExtractor={(item) => item.id}
-        style={styles.userList}
-      />
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -148,41 +167,46 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+    padding: 10,
+  },
+  content: {
+    flex: 1,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
+    padding: 12,
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    marginRight: 10,
+    marginLeft: 10,
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
   },
   searchInput: {
     flex: 1,
-    height: 40,
+    height: 50,
     borderWidth: 1,
     borderColor: "#ccc",
-    borderRadius: 5,
-    paddingHorizontal: 10,
+    borderRadius: 25,
+    paddingHorizontal: 20,
+    marginVertical: 10,
+  },
+  searchIcon: {
     marginLeft: 10,
   },
   userList: {
     flex: 1,
   },
   userCard: {
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
-  },
-  profileCard: {
     flexDirection: "row",
     alignItems: "center",
   },
-  profilePicture: {
+  defaultAvatar: {
     width: 50,
     height: 50,
     borderRadius: 25,
@@ -208,6 +232,21 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "white",
     fontSize: 14,
+  },
+  bottomTabBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    borderTopWidth: 1,
+    borderTopColor: "#ccc",
+    paddingVertical: 10,
+  },
+  tabButton: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: 10,
+  },
+  tabButtonText: {
+    fontSize: 16,
   },
 });
 

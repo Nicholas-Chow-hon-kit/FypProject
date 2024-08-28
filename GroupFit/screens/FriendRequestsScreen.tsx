@@ -1,3 +1,4 @@
+// FriendRequestsScreen.js
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -5,12 +6,14 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthProvider";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { CommunitiesStackParamList } from "../types";
 import { Ionicons } from "@expo/vector-icons";
+import { useTasks } from "../contexts/TaskProvider"; // Import useTasks
 
 type FriendRequestsScreenProps = NativeStackScreenProps<
   CommunitiesStackParamList,
@@ -32,16 +35,19 @@ const FriendRequestsScreen = ({
   routeName,
 }: FriendRequestsScreenProps) => {
   const { user } = useAuth();
+  const { fetchFriendRequestsCount, updateFriendRequestsCount } = useTasks(); // Use useTasks
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
   const [requestType, setRequestType] = useState<"received" | "sent">(
     "received"
   );
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchFriendRequests();
   }, [requestType]);
 
   const fetchFriendRequests = async () => {
+    setLoading(true);
     let query = supabase
       .from("friendships")
       .select("id, user_id, friend_id, status, created_by");
@@ -57,13 +63,13 @@ const FriendRequestsScreen = ({
     if (error) {
       console.error("Error fetching friend requests:", error);
     } else {
-      console.log("Friend requests fetched:", data);
       if (requestType === "received") {
         await fetchSenderProfiles(data);
       } else {
         await fetchFriendProfiles(data);
       }
     }
+    setLoading(false);
   };
 
   const fetchSenderProfiles = async (requests: FriendRequest[]) => {
@@ -103,6 +109,7 @@ const FriendRequestsScreen = ({
   };
 
   const handleAcceptRequest = async (requestId: number | string) => {
+    setLoading(true);
     const { data, error } = await supabase
       .from("friendships")
       .update({ status: "accepted" })
@@ -112,10 +119,13 @@ const FriendRequestsScreen = ({
       console.error("Error accepting friend request:", error);
     } else {
       fetchFriendRequests();
+      fetchFriendRequestsCount(); // Fetch the updated count
     }
+    setLoading(false);
   };
 
   const handleDeclineRequest = async (requestId: number | string) => {
+    setLoading(true);
     const { data, error } = await supabase
       .from("friendships")
       .update({ status: "declined" })
@@ -125,16 +135,34 @@ const FriendRequestsScreen = ({
       console.error("Error declining friend request:", error);
     } else {
       fetchFriendRequests();
+      fetchFriendRequestsCount(); // Fetch the updated count
     }
+    setLoading(false);
   };
 
   const renderFriendRequest = ({ item }: { item: FriendRequest }) => (
     <View style={styles.requestCard}>
       <View style={styles.profileCard}>
-        <View style={styles.profilePicture}>
-          <Ionicons name="person-circle-outline" size={48} color="black" />
+        <View style={styles.profileInfo}>
+          <View style={styles.profilePicture}>
+            <Ionicons name="person" size={24} color="gray" />
+          </View>
+          <Text style={styles.usernameText}>{item.username}</Text>
         </View>
-        <Text style={styles.usernameText}>{item.username}</Text>
+        {requestType === "received" && (
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.acceptButton}
+              onPress={() => handleAcceptRequest(item.id)}>
+              <Text style={styles.buttonText}>Accept</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.declineButton}
+              onPress={() => handleDeclineRequest(item.id)}>
+              <Text style={styles.buttonText}>Decline</Text>
+            </TouchableOpacity>
+          </View>
+        )}
         {requestType === "sent" && (
           <TouchableOpacity
             style={[styles.inviteButton, styles.invitedButton]}
@@ -143,20 +171,6 @@ const FriendRequestsScreen = ({
           </TouchableOpacity>
         )}
       </View>
-      {requestType === "received" && (
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.acceptButton}
-            onPress={() => handleAcceptRequest(item.id)}>
-            <Text style={styles.buttonText}>Accept</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.declineButton}
-            onPress={() => handleDeclineRequest(item.id)}>
-            <Text style={styles.buttonText}>Decline</Text>
-          </TouchableOpacity>
-        </View>
-      )}
     </View>
   );
 
@@ -198,12 +212,18 @@ const FriendRequestsScreen = ({
           </Text>
         </TouchableOpacity>
       </View>
-      <FlatList
-        data={friendRequests}
-        renderItem={renderFriendRequest}
-        keyExtractor={(item) => item.id.toString()}
-        style={styles.requestList}
-      />
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#007aff" />
+        </View>
+      ) : (
+        <FlatList
+          data={friendRequests}
+          renderItem={renderFriendRequest}
+          keyExtractor={(item) => item.id.toString()}
+          style={styles.requestList}
+        />
+      )}
       <TouchableOpacity
         style={styles.addFriendButton}
         onPress={() => navigation.navigate("AddFriends")}>
@@ -221,7 +241,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 10,
+    padding: 14,
     borderBottomWidth: 1,
     borderBottomColor: "#ccc",
   },
@@ -259,13 +279,15 @@ const styles = StyleSheet.create({
   },
   requestCard: {
     padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
   },
   profileCard: {
     flexDirection: "row",
     alignItems: "center",
-    flex: 1,
+    justifyContent: "space-between",
+  },
+  profileInfo: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   profilePicture: {
     width: 50,
@@ -277,13 +299,11 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   usernameText: {
-    flex: 1,
     fontSize: 16,
     fontWeight: "bold",
   },
   buttonContainer: {
     flexDirection: "row",
-    justifyContent: "flex-end",
   },
   acceptButton: {
     backgroundColor: "#007bff",
@@ -330,6 +350,11 @@ const styles = StyleSheet.create({
   },
   invitedButton: {
     backgroundColor: "#b3d9ff",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
 

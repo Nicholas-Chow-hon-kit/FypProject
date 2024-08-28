@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Alert, StyleSheet, View } from "react-native";
+import { Alert, StyleSheet, View, Image, ScrollView } from "react-native";
 import { supabase } from "../lib/supabase";
 import { Button, Input } from "@rneui/themed";
 
@@ -34,7 +34,13 @@ export default function Auth() {
   }
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.logoContainer}>
+        <Image
+          source={require("../assets/Logo/groupfit-high-resolution-logo-black-transparent-align-top.png")} // Replace with your logo path
+          style={styles.logo}
+        />
+      </View>
       <View style={[styles.verticallySpaced, styles.mt20]}>
         <Input
           label="Email"
@@ -72,14 +78,23 @@ export default function Auth() {
           onPress={() => signUpWithEmail()}
         />
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 40,
+    flexGrow: 1,
+    justifyContent: "center",
     padding: 12,
+  },
+  logoContainer: {
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  logo: {
+    width: 460, // Adjust the width and height as needed
+    height: 290,
   },
   verticallySpaced: {
     paddingTop: 4,
