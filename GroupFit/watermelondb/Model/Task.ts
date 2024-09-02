@@ -16,7 +16,7 @@ export default class Task extends Model {
   @text('notes') notes!: string;
   @text('priority') priority!: string;
   @text('notification') notification!: string;
-  @text('personal_id') personalId!: string;
+  @text('created_by_id') CreatedbyId!: string;
   @text('completed_by_id') completedById!: string;
   @text('assigned_to_id') assignedToId!: string;
   @text('group_id') groupId!: string;

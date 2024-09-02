@@ -2,7 +2,7 @@
 import { Task as TaskProviderType } from "../contexts/TaskProvider.types";
 import { Task as TaskCardType } from "../types";
 
-export const transformTaskData = (task: TaskProviderType, groupingName: string, groupingColor: string): TaskCardType => {
+export const transformTaskData = (task: TaskProviderType, groupingID: string, groupingColor: string): TaskCardType => {
   const startDateTime = new Date(task.start_date_time);
   const endDateTime = new Date(task.end_date_time);
   const notificationDateTime = task.notification ? new Date(task.notification) : null;
@@ -15,7 +15,7 @@ export const transformTaskData = (task: TaskProviderType, groupingName: string, 
     endDate: endDateTime.toDateString(),
     endTime: endDateTime.toTimeString().split(" ")[0].slice(0, 5),
     location: task.location,
-    grouping: groupingName,
+    grouping: groupingID,
     notes: task.notes,
     priority: task.priority,
     notificationDate: notificationDateTime ? notificationDateTime.toDateString() : null,

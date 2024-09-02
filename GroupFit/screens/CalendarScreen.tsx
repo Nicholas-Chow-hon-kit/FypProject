@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
   },
   calendarWrapper: {
     flex: 1,
-    transform: [{ scale: 1 }],
+    transform: [{ scale: 0.96 }, { translateY: -35 }],
     marginTop: 10,
     marginBottom: 20,
   },

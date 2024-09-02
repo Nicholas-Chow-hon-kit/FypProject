@@ -34,7 +34,7 @@ export default appSchema({
         { name: 'notes', type: 'string', isOptional: true }, // Optional notes
         { name: 'priority', type: 'string', isOptional: true }, // Optional priority level
         { name: 'notification', type: 'string', isOptional: true }, // Optional notification time
-        { name: 'personal_id', type: 'string' }, // ID of the person responsible
+        { name: 'created_by_id', type: 'string' }, // ID of the person responsible
         { name: 'completed_by_id', type: 'string', isOptional: true }, // Optional ID of the person who completed
         { name: 'assigned_to_id', type: 'string' }, // ID of the person assigned
         { name: 'group_id', type: 'string', isIndexed: true }, // Foreign key to the groups table
