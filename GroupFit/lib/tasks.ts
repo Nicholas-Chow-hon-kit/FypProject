@@ -75,9 +75,12 @@ export const getTasks = async (userId: string): Promise<Task[]> => {
       priority: task.priority,
       notification: task.notification,
       created_by: task.created_by,
+      completed_by: task.completed_by,
+      is_complete: task.is_complete,
     }));
 
     return transformedTasks;
+    
   } catch (error) {
     console.error("Error fetching tasks:", error);
     return [];

@@ -77,6 +77,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
     notificationTime: null,
     createdById: String(user),
     completedById: undefined,
+    is_complete: false,
     // assignedToId: [String(user)], // Store an array of IDs
   });
 
@@ -144,6 +145,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
       priority: task.priority,
       // assigned_to: task.assignedToId,
       created_by: String(user),
+      is_complete: false,
     };
 
     if (task.notificationDate && task.notificationTime) {

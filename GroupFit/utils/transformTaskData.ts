@@ -22,5 +22,6 @@ export const transformTaskData = (task: TaskProviderType, groupingID: string, gr
     notificationTime: notificationDateTime ? notificationDateTime.toTimeString().split(" ")[0].slice(0, 5) : null,
     createdById: task.created_by,
     completedById: task.completed_by,
+    is_complete: task.is_complete,
   };
 };

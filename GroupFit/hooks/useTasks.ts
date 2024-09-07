@@ -121,7 +121,11 @@ export const useTasks = () => {
     if (!user) {
       throw new Error("User not authenticated");
     }
-    await updateTask(taskId, taskData);
+    await updateTask(taskId, {
+      ...taskData,
+      is_complete: taskData.is_complete,
+      completed_by: taskData.is_complete ? String(user.id) : ("" as string),
+    });
     const updatedTasks = await getTasks(user.id);
     setTasks(updatedTasks);
   };

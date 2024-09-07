@@ -14,6 +14,8 @@ export interface TaskData {
   notification?: string;
   // assigned_to: string[]; // Ensure this is an array of strings
   created_by: string;
+  is_complete: boolean;
+  completed_by?: string;
 }
 
 export interface Task {
@@ -27,5 +29,6 @@ export interface Task {
   priority: string;
   notification: string;
   created_by: string;
-  completed_by?: string;
+  completed_by?: string | null;
+  is_complete: boolean;
 }

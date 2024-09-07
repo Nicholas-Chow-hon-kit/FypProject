@@ -104,6 +104,7 @@ const HomeScreen = () => {
             : null,
           createdById: task.created_by,
           completedById: task.completed_by,
+          is_complete: task.is_complete,
           // assignedToId: task.assigned_to,
         };
 

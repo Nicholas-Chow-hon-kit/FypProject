@@ -65,6 +65,8 @@ const CalendarScreen: React.FC = () => {
     setEvents(eventsMap);
   }, [tasks, selectedFilters, groupings]);
 
+  // console.log(tasks[0]);
+
   const fetchSelectedFilters = async () => {
     const { data, error } = await supabase
       .from("user_filters")

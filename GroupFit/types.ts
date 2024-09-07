@@ -45,7 +45,8 @@ export interface Task {
   notificationDate: string | null;  // date for notification, can be null
   notificationTime: string | null;  // time for notification, can be null
   createdById: string;     // personal identifier for the person who put up the task
-  completedById?: string; // personal identifier for the person who completed the task
+  completedById?: string | null; // personal identifier for the person who completed the task
+  is_complete: boolean;
   
 }
 

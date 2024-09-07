@@ -11,6 +11,7 @@ import {
   Modal,
   TouchableWithoutFeedback,
   Dimensions,
+  Switch, // Import Switch
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import ColorPickerModal from "../components/ColorPickerModal";
@@ -68,9 +69,19 @@ const UpdateForm: React.FC<UpdateFormProps> = ({
 
   const handleChange = (
     key: keyof typeof editedTask,
-    value: string | number | string[]
+    value: string | number | string[] | boolean | null
   ) => {
-    setEditedTask({ ...editedTask, [key]: value });
+    console.log(`Updating ${key} to ${value}`);
+    setEditedTask((prevTask) => {
+      if (key === "is_complete") {
+        return {
+          ...prevTask,
+          is_complete: Boolean(value),
+          completed_by: value ? String(user?.id) : undefined,
+        };
+      }
+      return { ...prevTask, [key]: value };
+    });
   };
 
   const handleDateChange = (key: keyof Task, value: Date | null) => {
@@ -114,6 +125,8 @@ const UpdateForm: React.FC<UpdateFormProps> = ({
       notes: editedTask.notes,
       priority: editedTask.priority,
       created_by: String(user?.id),
+      is_complete: editedTask.is_complete,
+      completed_by: editedTask.is_complete ? String(user?.id) : undefined,
     };
 
     if (editedTask.notificationDate && editedTask.notificationTime) {
@@ -126,6 +139,8 @@ const UpdateForm: React.FC<UpdateFormProps> = ({
         notification: formattedTask.notification,
       }),
     };
+
+    console.log(finalTask);
 
     // Update the grouping color in the database
     await supabase
@@ -158,6 +173,8 @@ const UpdateForm: React.FC<UpdateFormProps> = ({
   const onSelectColor = ({ hex }: ColorObject) => {
     setGroupColor(hex);
   };
+
+  console.log(editedTask.is_complete);
 
   const getGroupingIdByName = (
     groupings: any[],
@@ -330,6 +347,20 @@ const UpdateForm: React.FC<UpdateFormProps> = ({
             placeholder="Priority"
             value={editedTask.priority}
             onChangeText={(text) => handleChange("priority", text)}
+          />
+        </View>
+
+        {/* Add the is_complete toggle */}
+        <View
+          style={[styles.inputContainer, { justifyContent: "space-between" }]}>
+          <Text style={styles.labelText}>Complete</Text>
+          <Switch
+            value={editedTask.is_complete}
+            onValueChange={(value) => {
+              console.log(`Switch toggled to ${value}`);
+              handleChange("is_complete", value);
+              handleChange("completedById", value ? String(user?.id) : null);
+            }}
           />
         </View>
       </ScrollView>

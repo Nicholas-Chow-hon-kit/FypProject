@@ -35,6 +35,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
   const [expanded, setExpanded] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [creatorName, setCreatorName] = useState("");
+  const [completerName, setCompleterName] = useState("");
 
   useEffect(() => {
     const fetchCreatorName = async () => {
@@ -49,8 +50,23 @@ const TaskItem: React.FC<TaskItemProps> = ({
       }
     };
 
+    const fetchCompleterName = async () => {
+      if (task.completedById) {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("id", task.completedById)
+          .single();
+
+        if (data) {
+          setCompleterName(data.full_name);
+        }
+      }
+    };
+
     fetchCreatorName();
-  }, [task.createdById]);
+    fetchCompleterName();
+  }, [task.createdById, task.completedById]);
 
   const titleFontSize = expanded ? 16 * 1.5 : 16;
 
@@ -60,7 +76,12 @@ const TaskItem: React.FC<TaskItemProps> = ({
         onPress={() => setExpanded(!expanded)}
         onLongPress={() => setModalVisible(true)}>
         <View style={[styles.header, expanded && styles.headerExpanded]}>
-          <Text style={[styles.title, { fontSize: titleFontSize }]}>
+          <Text
+            style={[
+              styles.title,
+              { fontSize: titleFontSize },
+              task.is_complete && styles.strikethrough,
+            ]}>
             {task.title}
           </Text>
           {!expanded && (
@@ -132,6 +153,15 @@ const TaskItem: React.FC<TaskItemProps> = ({
             <Ionicons name="person" size={24} color="black" />
             <Text style={styles.inputText}>Created By: {creatorName}</Text>
           </View>
+
+          {task.is_complete && (
+            <View style={styles.inputContainer}>
+              <Ionicons name="checkmark-circle" size={24} color="green" />
+              <Text style={styles.inputText}>
+                Completed By: {completerName}
+              </Text>
+            </View>
+          )}
 
           <TouchableOpacity onPress={() => setExpanded(!expanded)}>
             <View style={styles.collapseIconContainer}>
@@ -208,6 +238,9 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     marginLeft: 8,
+  },
+  strikethrough: {
+    textDecorationLine: "line-through",
   },
   details: {
     borderRadius: 5,

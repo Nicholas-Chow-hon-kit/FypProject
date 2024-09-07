@@ -170,7 +170,11 @@ export const TaskProvider = ({ children }: TaskProviderProps) => {
     if (!user) {
       throw new Error("User not authenticated");
     }
-    await updateTask(taskId, taskData);
+    await updateTask(taskId, {
+      ...taskData,
+      is_complete: taskData.is_complete,
+      completed_by: taskData.is_complete ? String(user.id) : undefined,
+    });
     const updatedTasks = await getTasks(user.id);
     setTasks(updatedTasks);
   };
@@ -197,7 +201,7 @@ export const TaskProvider = ({ children }: TaskProviderProps) => {
       setSelectedGrouping,
       fetchFriendRequestsCount,
       updateFriendRequestsCount,
-      fetchGroupings, // Add fetchGroupings to the context value
+      fetchGroupings,
     }),
     [
       tasks,
