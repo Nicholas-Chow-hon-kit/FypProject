@@ -3,8 +3,9 @@ import 'react-native-url-polyfill/auto'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = "https://kptkloslwvzdixgrivyk.supabase.co"
-const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtwdGtsb3Nsd3Z6ZGl4Z3JpdnlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjI5MzAxMjQsImV4cCI6MjAzODUwNjEyNH0.r_Cd-naxopeArlTa9OViYfJf5WMjFsin-OJeehP_p1E"
+//fill this up with the anon key and url in the report
+const supabaseUrl = 
+const supabaseAnonKey = 
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
